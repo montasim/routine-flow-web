@@ -1,6 +1,15 @@
 {
   "name": "routine-flow",
   "version": "0.1.0",
+  "description": "RoutineFlow is a behavioral measurement and routine tracking system designed to cultivate positive habits, visualize daily consistency, and prevent behavioral drift.",
+  "keywords": [
+    "habits",
+    "routine",
+    "tracking",
+    "behavioral-measurement",
+    "productivity",
+    "consistency"
+  ],
   "private": true,
   "scripts": {
     "dev": "next dev",
