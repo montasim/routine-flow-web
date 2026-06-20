@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RoutineFlow 🌀
 
-## Getting Started
+RoutineFlow is a sleek, state-of-the-art **Behavioral Measurement & Routine Tracking System** designed to cultivate positive habits, visualize compliance consistency, and prevent behavioral drift. Built with **Next.js**, **TypeScript**, **Better Auth**, and **MongoDB**, it provides an elegant dashboard featuring rich visual aids, including interactive calendars, completion heatmaps, and compliance drift metrics.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🚀 Key Features
+
+* **Interactive Dashboard**: Track your occurrences for the day, mark tasks as completed or skipped, and view delays in real time.
+* **Multi-Engine Storage Layer**: Leverages native MongoDB collection queries with an automatic, queue-locked local JSON file backup mode (`db.json`) for environments without database access.
+* **Dual-Mode Secure Authentication**:
+  * **Social Login**: Google OAuth connection for rapid registration and profile synchronization.
+  * **Passwordless Credentials**: Custom OTP-based email verification plugin with temporary OTP store cache.
+* **Analytical Insights**:
+  * **Discipline Score**: Computes a performance score based on completion rate, consistency, delay penalty, and current streaks.
+  * **Drift Metric**: Rolling comparison tracking behavior shifts between consecutive 30-day windows.
+  * **Weekly Stability**: Calculates the deviation and consistency of scheduled streaks.
+  * **Annual Heatmap**: A GitHub-style yearly contribution chart mapped directly to completion percentages.
+* **Timezone Localization**: Full support for timezone-specific occurrence generation and scheduling (e.g. `Asia/Dhaka`).
+
+---
+
+## 🛠️ Technology Stack
+
+* **Framework**: Next.js 16 (App Router, Turbopack enabled)
+* **Language**: TypeScript (Strict checks)
+* **Database**: MongoDB (Native Driver)
+* **Authentication**: Better Auth (with Social Providers and custom credentials plugins)
+* **Styling**: Tailwind CSS & Custom CSS variables design tokens (from RoutineFlow design specifications)
+* **Excel Export**: SheetJS (`xlsx`) for analytical data extraction
+
+---
+
+## ⚙️ Environment Configuration
+
+Create a `.env` file in the root directory and configure the following parameters:
+
+```env
+# Database Connection
+MONGODB_URI="mongodb://localhost:27017/routineflow"
+
+# Better Auth Configuration
+BETTER_AUTH_SECRET="your-high-entropy-32-char-secret-here"
+BETTER_AUTH_URL="http://localhost:3000"
+
+# Social Authentication Providers (Google)
+GOOGLE_CLIENT_ID="your-google-oauth-client-id"
+GOOGLE_CLIENT_SECRET="your-google-oauth-client-secret"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🏃 Getting Started
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. Install Dependencies
 
-## Learn More
+Ensure you use `pnpm` to download packages:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm install
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 2. Run the Development Server
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Start the interactive development engine:
 
-## Deploy on Vercel
+```bash
+pnpm dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Open [http://localhost:3000](http://localhost:3000) with your browser to launch the web client interface.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 3. Production Build
+
+Validate the application type safety and compile optimized server bundles:
+
+```bash
+pnpm build
+```
