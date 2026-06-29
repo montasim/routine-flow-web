@@ -381,7 +381,9 @@ Every `routine_log` entry must snapshot the user's timezone at the moment of tha
 {
   routineId,
   routineTitleAtLog,
-  routineCategoryAtLog,
+  routineCategoryIdAtLog,
+  routineCategoryNameAtLog,
+  routineCategoryColorAtLog,
   date,
   scheduledTime,        // local time string: "07:00"
   scheduledTimeUtc,     // UTC equivalent at time of generation
@@ -565,7 +567,9 @@ The job must not depend on running at an exact local minute such as `00:05`. Any
   scheduledTime,
   scheduledTimeUtc,
   routineTitleAtLog,
-  routineCategoryAtLog,
+  routineCategoryIdAtLog,
+  routineCategoryNameAtLog,
+  routineCategoryColorAtLog,
   scheduleTypeAtLog,
   recurrenceTypeAtLog,
   recurrenceRulesAtLog,
@@ -654,7 +658,7 @@ Requirements:
   id,
   userId,
   title,
-  category,
+  categoryId,           // references categories.id
   scheduledTime,        // "07:00" local time string
   recurrenceType,       // daily | weekly | monthly | yearly
   recurrenceRules,      // e.g. { daysOfWeek: [1,3,5] }
@@ -747,6 +751,43 @@ For V1, no dynamic routines are implemented. But the occurrence generation logic
 
 ---
 
+## 9.4 Category System
+
+Categories are first-class, user-owned grouping resources for routines.
+
+They are not analytics aggregates. Category statistics are derived from `routine_logs` using the category snapshot fields written at log time.
+
+Category rules:
+
+* Users can list, create, edit, and soft-delete categories
+* The web UI must include a dedicated Categories page
+* Clicking a category opens a category detail/statistics view
+* Routine create/edit forms must allow selecting an existing category
+* Routine create/edit forms must allow creating a new category inline without leaving the routine modal
+* Category names are unique per user among non-deleted categories, case-insensitive
+* Category edits do not regenerate occurrences because category does not affect scheduling or notifications
+* Renaming a category updates current category display and current routine references, but historical `routine_logs` are not rewritten
+* Deleting a category is blocked while active or inactive non-deleted routines reference it, unless a future reassignment workflow is implemented
+* Category deletion is a soft delete and creates a sync tombstone for mobile cache correctness
+* Default categories may be seeded for new users, such as Fitness, Health, Work, Mind, Personal, and Spiritual
+
+Category fields:
+
+```text
+{
+  id,
+  userId,
+  name,
+  color,
+  description,
+  sortOrder,
+  isDeleted,
+  deletedAt
+}
+```
+
+---
+
 # 10. Execution Model
 
 ## 10.1 Completion Rule
@@ -759,7 +800,7 @@ completedAt: current UTC timestamp
 
 No manual time input. No exceptions.
 
-Completion also writes a `routine_logs` entry containing the occurrence fields and the routine metadata snapshot required by Section 12.5.
+Completion also writes a `routine_logs` entry containing the occurrence fields and the routine metadata snapshot required by Section 12.6.
 
 Completion eligibility:
 
@@ -856,14 +897,33 @@ Rules:
 
 ---
 
-## 12.3 routines
+## 12.3 categories
+
+```text
+{
+  id,
+  userId,
+  name,
+  color,
+  description,
+  sortOrder,
+  isDeleted,
+  deletedAt,
+  createdAt,
+  updatedAt
+}
+```
+
+---
+
+## 12.4 routines
 
 ```text
 {
   id,
   userId,
   title,
-  category,
+  categoryId,
   scheduledTime,
   scheduleType,
   recurrenceType,
@@ -879,7 +939,7 @@ Rules:
 
 ---
 
-## 12.4 occurrences
+## 12.5 occurrences
 
 ```text
 {
@@ -900,7 +960,7 @@ Rules:
 
 ---
 
-## 12.5 routine_logs (Source of Truth)
+## 12.6 routine_logs (Source of Truth)
 
 ```text
 {
@@ -909,7 +969,9 @@ Rules:
   occurrenceId,
   userId,
   routineTitleAtLog,
-  routineCategoryAtLog,
+  routineCategoryIdAtLog,
+  routineCategoryNameAtLog,
+  routineCategoryColorAtLog,
   scheduleTypeAtLog,
   recurrenceTypeAtLog,
   recurrenceRulesAtLog,
@@ -930,25 +992,25 @@ The snapshot fields are mandatory. They preserve historical analytics when a rou
 
 ---
 
-## 12.6 sessions (Better Auth)
+## 12.7 sessions (Better Auth)
 
 Session records for web cookie authentication and bearer API/mobile authentication.
 
 ---
 
-## 12.7 accounts / social identities (Better Auth)
+## 12.8 accounts / social identities (Better Auth)
 
 Better Auth-owned account/social identity records for Google social login. Application code may read these records through Better Auth APIs or the custom adapter, but must not depend on undocumented internal field names outside the adapter.
 
 ---
 
-## 12.8 verifications (Better Auth)
+## 12.9 verifications (Better Auth)
 
 Framework-owned Better Auth verification records. Custom email OTP codes for V1 are stored in the `otp_codes` MongoDB collection defined in this section, not in memory.
 
 ---
 
-## 12.9 otp_codes
+## 12.10 otp_codes
 
 ```text
 {
@@ -982,7 +1044,7 @@ Rules:
 
 ---
 
-## 12.10 mobile_social_auth_codes
+## 12.11 mobile_social_auth_codes
 
 ```text
 {
@@ -1008,7 +1070,7 @@ Rules:
 
 ---
 
-## 12.11 idempotency_keys
+## 12.12 idempotency_keys
 
 ```text
 {
@@ -1042,7 +1104,7 @@ Rules:
 
 ---
 
-## 12.12 sync_tombstones
+## 12.13 sync_tombstones
 
 ```text
 {
@@ -1058,16 +1120,21 @@ Rules:
 
 Used for mobile cache correctness when routines are soft-deleted or pending occurrences are removed because of routine deletion, routine deactivation, schedule edits, reminder edits, or timezone regeneration.
 
+Category soft deletion also writes a tombstone with `resourceType: "category"` so mobile clients can remove cached categories.
+
 **Retention:** Indefinite. Tombstones never deleted. Mobile clients always see full deletion history.
 
 ---
 
-## 12.13 Required Indexes / Constraints
+## 12.14 Required Indexes / Constraints
 
 ```text
 users.email                             unique
 user_settings.userId                    unique
+categories.userId + normalizedName + isDeleted unique partial
+categories.userId + sortOrder           index
 routines.userId + isDeleted             index
+routines.userId + categoryId + isDeleted index
 occurrences.userId + date               index
 occurrences.userId + routineId + date   unique
 occurrences.notificationDueAt + status  index
@@ -1087,7 +1154,7 @@ The unique occurrence and log constraints are required for scheduled-job idempot
 
 ---
 
-## 12.14 Detailed Collection Schemas
+## 12.15 Detailed Collection Schemas
 
 General database rules:
 
@@ -1123,6 +1190,22 @@ General database rules:
 | `createdAt` | Date | Yes | UTC |
 | `updatedAt` | Date | Yes | UTC |
 
+### categories
+
+| Field | Type | Required | Rules |
+|---|---|---:|---|
+| `_id` | ObjectId | Yes | Primary key |
+| `userId` | string | Yes | References users.id |
+| `name` | string | Yes | 1-64 chars; unique per user among non-deleted categories, case-insensitive |
+| `normalizedName` | string | Yes | Lowercase/trimmed name for uniqueness |
+| `color` | string | Yes | Hex color string, validated against `^#[0-9a-fA-F]{6}$` |
+| `description` | string \| null | Yes | Null or 0-240 chars |
+| `sortOrder` | number | Yes | Integer for user-controlled ordering |
+| `isDeleted` | boolean | Yes | Soft-delete flag; default `false` |
+| `deletedAt` | Date \| null | Yes | UTC soft-delete timestamp; null when not deleted |
+| `createdAt` | Date | Yes | UTC |
+| `updatedAt` | Date | Yes | UTC |
+
 ### routines
 
 | Field | Type | Required | Rules |
@@ -1130,7 +1213,7 @@ General database rules:
 | `_id` | ObjectId | Yes | Primary key |
 | `userId` | string | Yes | References users.id |
 | `title` | string | Yes | 1-120 chars |
-| `category` | string | Yes | 1-64 chars |
+| `categoryId` | string | Yes | References categories.id; category must belong to same user and not be deleted |
 | `scheduledTime` | string \| null | Yes | `HH:mm` for `fixed`; null for future `dynamic` |
 | `scheduleType` | `"fixed" \| "dynamic"` | Yes | V1 creates only `fixed` routines |
 | `recurrenceType` | `"daily" \| "weekly" \| "monthly" \| "yearly"` | Yes | Custom interval excluded from V1 |
@@ -1179,7 +1262,9 @@ Recurrence rule shapes:
 | `occurrenceId` | string | Yes | Unique, references occurrences.id |
 | `userId` | string | Yes | References users.id |
 | `routineTitleAtLog` | string | Yes | Routine title snapshot |
-| `routineCategoryAtLog` | string | Yes | Routine category snapshot |
+| `routineCategoryIdAtLog` | string | Yes | Category id snapshot |
+| `routineCategoryNameAtLog` | string | Yes | Category name snapshot |
+| `routineCategoryColorAtLog` | string | Yes | Category color snapshot |
 | `scheduleTypeAtLog` | `"fixed" \| "dynamic"` | Yes | Routine schedule type snapshot |
 | `recurrenceTypeAtLog` | `"daily" \| "weekly" \| "monthly" \| "yearly"` | Yes | Routine recurrence snapshot |
 | `recurrenceRulesAtLog` | object | Yes | Routine recurrence rules snapshot |
@@ -1283,6 +1368,7 @@ Rolling 30-day window consistency comparison. Detects when a user's behavior is 
 * Analytics dashboard
 * Calendar — past and future occurrence view
 * Routine management — CRUD
+* Category management — dedicated category list, category CRUD, inline category creation from the routine form, and category detail/statistics views
 * Historical analysis
 * Export tools
 * Settings — timezone, reminders, notification permission state, profile
@@ -1322,7 +1408,9 @@ Rules:
 * Empty, loading, error, and success states must be visually consistent across dashboard, routines, analytics, export, and settings
 * Page-level layouts must use shared spacing primitives or layout components for section gaps, panel padding, grid gaps, and toolbar spacing
 * Similar surfaces must use the same margin, padding, border radius, shadow, border, and typography rules unless a documented component variant requires otherwise
-* Dashboard cards, routine cards, settings panels, analytics panels, table containers, export panels, and modal bodies must align to the same spacing scale
+* Dashboard cards, routine cards, category cards, settings panels, analytics panels, table containers, export panels, and modal bodies must align to the same spacing scale
+* Routine and category card edit/delete icon buttons should be visually hidden by default and revealed on card hover or keyboard focus
+* Hover-revealed card actions must remain accessible on touch devices, keyboard navigation, and assistive technology
 * Feature code must not invent one-off spacing values for common layout patterns; add or reuse a component variant instead
 * Skeleton loaders must be component-specific, not generic full-page gray blocks
 * Skeleton loaders must preserve the same layout, spacing, dimensions, and hierarchy as the loaded component
@@ -1532,6 +1620,9 @@ Required form schemas:
 * Routine create form
 * Routine edit form
 * Routine delete/deactivate confirmation form, if typed confirmation input is required
+* Category create form
+* Category edit form
+* Category delete confirmation form, if typed confirmation input is required
 * Settings form
 * Timezone/reminder settings subform
 * Notification preferences form
@@ -1658,6 +1749,7 @@ Package usage rules:
 * Full export
 * Date-range export
 * Routine-specific export
+* Category-specific export
 
 ---
 
@@ -1669,16 +1761,18 @@ Primary: Excel (.xlsx) with multiple sheets. Optional: CSV fallback.
 
 ## 15.3 Excel Structure
 
-**Sheet 1 — Routines:** routine metadata
+**Sheet 1 — Categories:** category metadata
 
-**Sheet 2 — Logs (Primary Dataset):**
+**Sheet 2 — Routines:** routine metadata with current category references
+
+**Sheet 3 — Logs (Primary Dataset):**
 ```text
-Date | Routine Snapshot | Category Snapshot | Scheduled (local) | Completed (local) | Delay (min) | Status | Timezone
+Date | Routine Snapshot | Category Id Snapshot | Category Name Snapshot | Category Color Snapshot | Scheduled (local) | Completed (local) | Delay (min) | Status | Timezone
 ```
 
-**Sheet 3 — Summary:** aggregated statistics
+**Sheet 4 — Summary:** aggregated statistics
 
-**Sheet 4 — Deleted Routines / Sync Tombstones:** soft-deleted routines and deletion metadata required for historical context and mobile sync
+**Sheet 5 — Deleted Resources / Sync Tombstones:** soft-deleted routines, soft-deleted categories, removed pending occurrences, and deletion metadata required for historical context and mobile sync
 
 ---
 
@@ -1688,9 +1782,9 @@ Date | Routine Snapshot | Category Snapshot | Scheduled (local) | Completed (loc
 * Data must exactly match what analytics displays
 * No partial or missing status rows
 * Log rows must use `routine_logs` snapshot fields, not current routine metadata
-* Deleted routines must still export correctly from log snapshots
+* Deleted routines and categories must still export correctly from log snapshots
 * Export actions must show the shared confirmation modal before file generation or download begins
-* Export confirmation must show selected format, date range, routine filter, and a clear note that personal routine data will be downloaded
+* Export confirmation must show selected format, date range, routine/category filters, and a clear note that personal routine data will be downloaded
 
 ---
 
@@ -1707,6 +1801,8 @@ Date | Routine Snapshot | Category Snapshot | Scheduled (local) | Completed (loc
 | `/api/v1/auth/social/exchange` | POST | Exchange one-time mobile social code for bearer session |
 | `/api/v1/auth/logout` | POST | Revoke current web or API session |
 | `/api/v1/settings` | GET/PATCH | Read/update timezone, reminders, notification settings |
+| `/api/v1/categories` | GET/POST | List/Create routine categories |
+| `/api/v1/categories/[id]` | PATCH/DELETE | Update/soft-delete routine category |
 | `/api/v1/routines` | GET/POST | List/Create routines |
 | `/api/v1/routines/[id]` | PATCH/DELETE | Update/soft-delete routine |
 | `/api/v1/occurrences` | GET | List occurrences by date range |
@@ -1911,8 +2007,8 @@ Contract rules:
 * Every `/api/v1` route must appear in the OpenAPI file before implementation is considered complete
 * Every request body, query parameter, path parameter, header, response body, binary response, and Problem Details error response must be defined
 * Security schemes must define cookie session auth and bearer token auth
-* Shared schemas must include User, UserSettings, Routine, Occurrence, RoutineLog, AnalyticsResponse, PaginationMeta, ApiMeta, ProblemDetails, and IdempotencyConflictProblem
-* OpenAPI examples must include successful OTP login, social-login exchange, routine create, occurrence complete, occurrence skip, timezone update, soft delete, logs pagination, analytics, export, and tombstone sync
+* Shared schemas must include User, UserSettings, Category, Routine, Occurrence, RoutineLog, AnalyticsResponse, PaginationMeta, ApiMeta, ProblemDetails, and IdempotencyConflictProblem
+* OpenAPI examples must include successful OTP login, social-login exchange, category create, category update, category soft delete, routine create, occurrence complete, occurrence skip, timezone update, soft delete, logs pagination, analytics, export, and tombstone sync
 * Contract tests must validate route responses against the OpenAPI schemas
 * Mobile client generation or typed API wrappers must use the OpenAPI file rather than hand-written divergent DTOs
 * Breaking OpenAPI changes require `/api/v2`
@@ -2248,6 +2344,126 @@ Rules:
 * Reminder changes update `notificationDueAt` for pending future occurrences
 * Reminder and notification changes cancel/reschedule notification jobs for affected pending occurrences
 
+### `GET /api/v1/categories`
+
+Auth: required.
+
+Query:
+
+```text
+includeDeleted?: boolean
+updatedSince?: ISO timestamp
+cursor?: string
+limit?: number
+```
+
+Response data:
+
+```json
+{
+  "categories": []
+}
+```
+
+Rules:
+
+* Default response excludes soft-deleted categories
+* Categories sort by `sortOrder asc`, then `name asc`
+* Mobile clients use `updatedSince` with tombstones to keep category caches current
+
+### `POST /api/v1/categories`
+
+Auth: required.
+
+Headers:
+
+```text
+Idempotency-Key: uuid
+```
+
+Request:
+
+```json
+{
+  "name": "Fitness",
+  "color": "#1F9D5B",
+  "description": "Training and movement routines",
+  "sortOrder": 10
+}
+```
+
+Response data:
+
+```json
+{
+  "category": {}
+}
+```
+
+Rules:
+
+* Successful create returns `201 Created`
+* Category names are unique per user among non-deleted categories, case-insensitive
+* Routine create/edit forms may call this endpoint inline before submitting the routine payload
+
+### `PATCH /api/v1/categories/[id]`
+
+Auth: required.
+
+Request: partial category update.
+
+```json
+{
+  "name": "Fitness",
+  "color": "#1F9D5B",
+  "description": "Training and movement routines",
+  "sortOrder": 10
+}
+```
+
+Response data:
+
+```json
+{
+  "category": {}
+}
+```
+
+Rules:
+
+* Category edits do not regenerate occurrences
+* Historical `routine_logs` are never rewritten after category rename, color change, or description change
+* Current routine list/detail responses should resolve current category display from the category resource
+
+### `DELETE /api/v1/categories/[id]`
+
+Auth: required.
+
+Response data:
+
+```json
+{
+  "deleted": true,
+  "category": {
+    "id": "category_id",
+    "isDeleted": true,
+    "deletedAt": "2026-06-29T00:00:00.000Z"
+  },
+  "tombstone": {
+    "resourceType": "category",
+    "resourceId": "category_id",
+    "deletedAt": "2026-06-29T00:00:00.000Z"
+  }
+}
+```
+
+Rules:
+
+* Category deletion is a soft delete
+* Delete returns `409 Conflict` if any non-deleted routine still references the category
+* Historical logs are never deleted or rewritten
+* A category tombstone is required for mobile sync
+
 ### `GET /api/v1/routines`
 
 Auth: required.
@@ -2256,6 +2472,7 @@ Query:
 
 ```text
 includeInactive?: boolean
+categoryId?: string
 updatedSince?: ISO timestamp
 cursor?: string
 limit?: number
@@ -2284,7 +2501,7 @@ Request:
 ```json
 {
   "title": "Morning Gym",
-  "category": "Fitness",
+  "categoryId": "category_fitness_id",
   "scheduledTime": "07:00",
   "recurrenceType": "weekly",
   "recurrenceRules": {
@@ -2318,7 +2535,7 @@ Request: partial routine update.
 ```json
 {
   "title": "Morning Strength",
-  "category": "Fitness",
+  "categoryId": "category_fitness_id",
   "scheduledTime": "07:30",
   "recurrenceType": "daily",
   "recurrenceRules": {},
@@ -2338,6 +2555,7 @@ Response data:
 Rules:
 
 * Updating schedule, reminder, recurrence, active state, or timezone regenerates pending future occurrences in the 7-day window
+* Updating `categoryId` does not regenerate occurrences because category does not affect scheduling or reminders
 * Historical logs are never rewritten
 
 ### `DELETE /api/v1/routines/[id]`
@@ -2492,6 +2710,7 @@ Query:
 startDate?: YYYY-MM-DD
 endDate?: YYYY-MM-DD
 routineId?: string
+categoryId?: string
 status?: Completed | Missed | Skipped
 updatedSince?: ISO timestamp
 cursor?: string
@@ -2527,6 +2746,7 @@ date?: YYYY-MM-DD
 startDate?: YYYY-MM-DD
 endDate?: YYYY-MM-DD
 routineId?: string
+categoryId?: string
 ```
 
 Response data:
@@ -2558,6 +2778,7 @@ range?: all | 7d | 30d | 90d | custom
 startDate?: YYYY-MM-DD
 endDate?: YYYY-MM-DD
 routineId?: string
+categoryId?: string
 ```
 
 Response:
@@ -2579,7 +2800,7 @@ Auth: required.
 Query:
 
 ```text
-resourceType?: routine | occurrence
+resourceType?: routine | occurrence | category
 updatedSince?: ISO timestamp
 cursor?: string
 limit?: number
@@ -2598,7 +2819,7 @@ Rules:
 * Default `limit` is 50
 * Maximum `limit` is 200
 * Tombstones sort by `deletedAt asc`, then `resourceId asc`
-* Mobile clients use this endpoint to remove cached routines or occurrences that no longer appear in normal list endpoints
+* Mobile clients use this endpoint to remove cached routines, occurrences, or categories that no longer appear in normal list endpoints
 * Tombstones must not expose user emails, auth data, or unrelated resource data
 
 ### `POST /api/v1/cron`
@@ -2690,9 +2911,9 @@ JSON fallback is for local development only and must not be used in production.
 * **Logger utility** — Pino-backed structured logging (`lib/logger.ts`)
 * **Constants** — app-wide constants (`lib/constant.ts`)
 * **Auth client** — React auth utilities (`lib/auth-client.ts`)
-* **Schema modules** — shared Zod schemas for auth, routines, recurrence, occurrences, logs, settings, analytics, export, client forms, API contracts, and environment variables
+* **Schema modules** — shared Zod schemas for auth, categories, routines, recurrence, occurrences, logs, settings, analytics, export, client forms, API contracts, and environment variables
 * **UI foundation modules** — shared app shell, page layout, section, panel/card, toolbar, form field, alert, empty state, skeleton, modal, and confirmation dialog components
-* **Service modules** — isolated business logic for auth, routines, occurrences, missed detection, analytics, notifications, exports, and email delivery
+* **Service modules** — isolated business logic for auth, categories, routines, occurrences, missed detection, analytics, notifications, exports, and email delivery
 
 ## 17.6 Logging Requirements
 
@@ -2901,6 +3122,9 @@ Every finalized log must include enough routine snapshot data to explain what th
 * RoutineFlow-managed mobile social login through web/API flow, with no native Google login configuration in the mobile app
 * Shared versioned `/api/v1` mobile-ready REST API contract
 * Formal OpenAPI 3.1 mobile API contract
+* Category CRUD
+* Category detail/statistics views
+* Inline category creation from routine create/edit forms
 * Routine CRUD
 * Routine soft delete
 * Recurrence types: daily, weekly, monthly, yearly
