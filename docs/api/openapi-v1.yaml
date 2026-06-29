@@ -1,0 +1,1078 @@
+openapi: 3.1.0
+info:
+  title: RoutineFlow API
+  version: 1.0.0
+  description: Versioned RoutineFlow API contract for first-party web and mobile clients.
+servers:
+  - url: https://routineflow.app
+    description: Production
+  - url: http://localhost:3000
+    description: Local development
+security:
+  - cookieSession: []
+  - bearerSession: []
+tags:
+  - name: Auth
+  - name: Settings
+  - name: Routines
+  - name: Occurrences
+  - name: Logs
+  - name: Analytics
+  - name: Export
+  - name: Sync
+  - name: Jobs
+paths:
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current authenticated user and settings.
+      responses:
+        "200":
+          $ref: "#/components/responses/AuthMe"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/auth/otp/send:
+    post:
+      tags: [Auth]
+      summary: Send a 3-minute numeric OTP by email.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpSendRequest"
+      responses:
+        "202":
+          description: OTP accepted for delivery.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtpSendResponseEnvelope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /api/v1/auth/otp/verify:
+    post:
+      tags: [Auth]
+      summary: Verify OTP and create a web cookie session plus mobile bearer-compatible session.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpVerifyRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/AuthSession"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /api/v1/auth/social/google/start:
+    get:
+      tags: [Auth]
+      summary: Start Google OAuth through the RoutineFlow backend.
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Client"
+        - name: redirectUri
+          in: query
+          schema:
+            type: string
+          description: Allowlisted mobile deep link redirect URI when client=mobile.
+        - name: state
+          in: query
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirect to Google OAuth.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /api/v1/auth/social/google/callback:
+    get:
+      tags: [Auth]
+      summary: Handle Google OAuth callback and create a RoutineFlow session or mobile exchange code.
+      security: []
+      responses:
+        "302":
+          description: Redirect to web app or mobile deep link with one-time exchange code.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/auth/social/exchange:
+    post:
+      tags: [Auth]
+      summary: Exchange one-time mobile social auth code for a bearer-compatible session.
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SocialExchangeRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/AuthSession"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke current cookie or bearer session.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Session revoked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogoutResponseEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/settings:
+    get:
+      tags: [Settings]
+      summary: Get current user settings.
+      responses:
+        "200":
+          description: Current settings.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsResponseEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    patch:
+      tags: [Settings]
+      summary: Update timezone, reminder, or notification settings.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsUpdateRequest"
+      responses:
+        "200":
+          description: Updated settings and side-effect counts.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsUpdateResponseEnvelope"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/v1/routines:
+    get:
+      tags: [Routines]
+      summary: List routines.
+      parameters:
+        - name: includeInactive
+          in: query
+          schema: { type: boolean, default: false }
+        - name: includeDeleted
+          in: query
+          schema: { type: boolean, default: false }
+        - $ref: "#/components/parameters/UpdatedSince"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Routine list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoutineListResponseEnvelope"
+    post:
+      tags: [Routines]
+      summary: Create routine and generate active-window occurrences.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoutineCreateRequest"
+      responses:
+        "201":
+          description: Routine created.
+          headers:
+            Location:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoutineResponseEnvelope"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /api/v1/routines/{id}:
+    patch:
+      tags: [Routines]
+      summary: Update routine. Schedule-affecting changes regenerate pending occurrences.
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoutineUpdateRequest"
+      responses:
+        "200":
+          description: Routine updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoutineResponseEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+    delete:
+      tags: [Routines]
+      summary: Soft-delete routine and remove pending current/future occurrences.
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Routine soft-deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoutineDeleteResponseEnvelope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/occurrences:
+    get:
+      tags: [Occurrences]
+      summary: List occurrences by date or bounded date range.
+      parameters:
+        - name: date
+          in: query
+          schema: { $ref: "#/components/schemas/LocalDate" }
+        - name: startDate
+          in: query
+          schema: { $ref: "#/components/schemas/LocalDate" }
+        - name: endDate
+          in: query
+          schema: { $ref: "#/components/schemas/LocalDate" }
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/OccurrenceStatus" }
+        - $ref: "#/components/parameters/UpdatedSince"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Occurrence list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OccurrenceListResponseEnvelope"
+  /api/v1/occurrences/generate:
+    post:
+      tags: [Occurrences]
+      summary: Ensure the user's rolling 7-day occurrence window exists.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Generation summary.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OccurrenceGenerateResponseEnvelope"
+  /api/v1/occurrences/{id}/complete:
+    post:
+      tags: [Occurrences]
+      summary: Complete an eligible same-day pending occurrence.
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Occurrence completed and log written.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OccurrenceActionResponseEnvelope"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /api/v1/occurrences/{id}/skip:
+    post:
+      tags: [Occurrences]
+      summary: Skip an eligible same-day pending occurrence after client confirmation.
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Occurrence skipped and log written.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OccurrenceActionResponseEnvelope"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /api/v1/logs:
+    get:
+      tags: [Logs]
+      summary: List routine logs from the source-of-truth log collection.
+      parameters:
+        - name: startDate
+          in: query
+          schema: { $ref: "#/components/schemas/LocalDate" }
+        - name: endDate
+          in: query
+          schema: { $ref: "#/components/schemas/LocalDate" }
+        - name: routineId
+          in: query
+          schema: { type: string }
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/LogStatus" }
+        - $ref: "#/components/parameters/UpdatedSince"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Routine log list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogListResponseEnvelope"
+  /api/v1/analytics:
+    get:
+      tags: [Analytics]
+      summary: Fetch analytics computed from routine_logs.
+      parameters:
+        - name: period
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [daily, weekly, monthly, yearly]
+        - name: date
+          in: query
+          schema: { $ref: "#/components/schemas/LocalDate" }
+        - name: startDate
+          in: query
+          schema: { $ref: "#/components/schemas/LocalDate" }
+        - name: endDate
+          in: query
+          schema: { $ref: "#/components/schemas/LocalDate" }
+        - name: routineId
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Analytics response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsResponseEnvelope"
+  /api/v1/export:
+    get:
+      tags: [Export]
+      summary: Export routine data as XLSX or CSV.
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [xlsx, csv]
+            default: xlsx
+        - name: range
+          in: query
+          schema:
+            type: string
+            enum: [all, 7d, 30d, 90d, custom]
+            default: all
+        - name: startDate
+          in: query
+          schema: { $ref: "#/components/schemas/LocalDate" }
+        - name: endDate
+          in: query
+          schema: { $ref: "#/components/schemas/LocalDate" }
+        - name: routineId
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Binary export file.
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+  /api/v1/sync/tombstones:
+    get:
+      tags: [Sync]
+      summary: List deleted/removed resource tombstones for mobile sync.
+      parameters:
+        - name: resourceType
+          in: query
+          schema:
+            type: string
+            enum: [routine, occurrence]
+        - $ref: "#/components/parameters/UpdatedSince"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Tombstone list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TombstoneListResponseEnvelope"
+  /api/v1/cron:
+    post:
+      tags: [Jobs]
+      summary: Server-to-server scheduled job trigger when not handled by Inngest.
+      security:
+        - scheduledJobSecret: []
+      responses:
+        "200":
+          description: Scheduled job summary.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CronResponseEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+components:
+  securitySchemes:
+    cookieSession:
+      type: apiKey
+      in: cookie
+      name: better-auth.session_token
+    bearerSession:
+      type: http
+      scheme: bearer
+    scheduledJobSecret:
+      type: http
+      scheme: bearer
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 20
+    Client:
+      name: client
+      in: query
+      required: true
+      schema:
+        type: string
+        enum: [web, mobile]
+    UpdatedSince:
+      name: updatedSince
+      in: query
+      schema:
+        type: string
+        format: date-time
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+  responses:
+    AuthMe:
+      description: Authenticated user and settings.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthMeResponseEnvelope"
+    AuthSession:
+      description: Auth session response.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthSessionResponseEnvelope"
+    BadRequest:
+      description: Bad request.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    ValidationError:
+      description: Validation failed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    Unauthorized:
+      description: Unauthorized.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    NotFound:
+      description: Resource not found.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    Conflict:
+      description: Conflict or invalid state transition.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    RateLimited:
+      description: Rate limited.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+  schemas:
+    ApiMeta:
+      type: object
+      required: [apiVersion, requestId, serverTime]
+      properties:
+        apiVersion: { type: string, const: v1 }
+        requestId: { type: string }
+        serverTime: { type: string, format: date-time }
+        limit: { type: integer }
+        hasMore: { type: boolean }
+        nextCursor:
+          type: [string, "null"]
+        syncToken:
+          type: string
+    ProblemDetails:
+      type: object
+      required: [type, title, status, detail, instance, code, requestId]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        code: { type: string }
+        requestId: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            required: [path, message]
+            properties:
+              path: { type: string }
+              message: { type: string }
+    LocalDate:
+      type: string
+      pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+      examples: ["2026-06-29"]
+    LocalTime:
+      type: string
+      pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+      examples: ["07:00"]
+    OccurrenceStatus:
+      type: string
+      enum: [Pending, Completed, Missed, Skipped]
+    LogStatus:
+      type: string
+      enum: [Completed, Missed, Skipped]
+    RecurrenceType:
+      type: string
+      enum: [daily, weekly, monthly, yearly]
+    RecurrenceRules:
+      type: object
+      additionalProperties: false
+      properties:
+        daysOfWeek:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+        daysOfMonth:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+            maximum: 31
+        dates:
+          type: array
+          items:
+            type: object
+            required: [month, day]
+            additionalProperties: false
+            properties:
+              month:
+                type: integer
+                minimum: 1
+                maximum: 12
+              day:
+                type: integer
+                minimum: 1
+                maximum: 31
+    User:
+      type: object
+      required: [id, name, email, image]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string, format: email }
+        image:
+          type: [string, "null"]
+    UserSettings:
+      type: object
+      required: [timezone, defaultReminderMinutes, notificationPreferences]
+      properties:
+        timezone: { type: string }
+        defaultReminderMinutes:
+          type: integer
+          minimum: 0
+          maximum: 1440
+        notificationPreferences:
+          type: object
+          required: [browserNotificationsEnabled]
+          properties:
+            browserNotificationsEnabled: { type: boolean }
+    Routine:
+      type: object
+      required:
+        - id
+        - title
+        - category
+        - scheduledTime
+        - scheduleType
+        - recurrenceType
+        - recurrenceRules
+        - reminderOverride
+        - isActive
+        - isDeleted
+        - deletedAt
+        - createdAt
+        - updatedAt
+      properties:
+        id: { type: string }
+        title: { type: string, minLength: 1, maxLength: 120 }
+        category: { type: string, minLength: 1, maxLength: 64 }
+        scheduledTime:
+          anyOf:
+            - $ref: "#/components/schemas/LocalTime"
+            - type: "null"
+        scheduleType:
+          type: string
+          enum: [fixed, dynamic]
+        recurrenceType:
+          $ref: "#/components/schemas/RecurrenceType"
+        recurrenceRules:
+          $ref: "#/components/schemas/RecurrenceRules"
+        reminderOverride:
+          type: [integer, "null"]
+          minimum: 0
+          maximum: 1440
+        isActive: { type: boolean }
+        isDeleted: { type: boolean }
+        deletedAt:
+          type: [string, "null"]
+          format: date-time
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    RoutineCreateRequest:
+      type: object
+      required: [title, category, scheduledTime, recurrenceType, recurrenceRules]
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 120 }
+        category: { type: string, minLength: 1, maxLength: 64 }
+        scheduledTime:
+          $ref: "#/components/schemas/LocalTime"
+        recurrenceType:
+          $ref: "#/components/schemas/RecurrenceType"
+        recurrenceRules:
+          $ref: "#/components/schemas/RecurrenceRules"
+        reminderOverride:
+          type: [integer, "null"]
+          minimum: 0
+          maximum: 1440
+    RoutineUpdateRequest:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 120 }
+        category: { type: string, minLength: 1, maxLength: 64 }
+        scheduledTime:
+          $ref: "#/components/schemas/LocalTime"
+        recurrenceType:
+          $ref: "#/components/schemas/RecurrenceType"
+        recurrenceRules:
+          $ref: "#/components/schemas/RecurrenceRules"
+        reminderOverride:
+          type: [integer, "null"]
+          minimum: 0
+          maximum: 1440
+        isActive: { type: boolean }
+    Occurrence:
+      type: object
+      required: [id, routineId, date, scheduledTime, scheduledTimeUtc, timezoneAtGeneration, status, reminderMinutes, notificationDueAt, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        routineId: { type: string }
+        date:
+          $ref: "#/components/schemas/LocalDate"
+        scheduledTime:
+          $ref: "#/components/schemas/LocalTime"
+        scheduledTimeUtc: { type: string, format: date-time }
+        timezoneAtGeneration: { type: string }
+        status:
+          $ref: "#/components/schemas/OccurrenceStatus"
+        reminderMinutes: { type: integer }
+        notificationDueAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    RoutineLog:
+      type: object
+      required:
+        - id
+        - routineId
+        - occurrenceId
+        - routineTitleAtLog
+        - routineCategoryAtLog
+        - scheduleTypeAtLog
+        - recurrenceTypeAtLog
+        - recurrenceRulesAtLog
+        - reminderMinutesAtLog
+        - date
+        - scheduledTime
+        - scheduledTimeUtc
+        - completedAt
+        - timezoneAtLog
+        - status
+        - delayMinutes
+        - createdAt
+      properties:
+        id: { type: string }
+        routineId: { type: string }
+        occurrenceId: { type: string }
+        routineTitleAtLog: { type: string }
+        routineCategoryAtLog: { type: string }
+        scheduleTypeAtLog:
+          type: string
+          enum: [fixed, dynamic]
+        recurrenceTypeAtLog:
+          $ref: "#/components/schemas/RecurrenceType"
+        recurrenceRulesAtLog:
+          $ref: "#/components/schemas/RecurrenceRules"
+        reminderMinutesAtLog: { type: integer }
+        date:
+          $ref: "#/components/schemas/LocalDate"
+        scheduledTime:
+          $ref: "#/components/schemas/LocalTime"
+        scheduledTimeUtc: { type: string, format: date-time }
+        completedAt:
+          type: [string, "null"]
+          format: date-time
+        timezoneAtLog: { type: string }
+        status:
+          $ref: "#/components/schemas/LogStatus"
+        delayMinutes:
+          type: [integer, "null"]
+        createdAt: { type: string, format: date-time }
+    Tombstone:
+      type: object
+      required: [id, resourceType, resourceId, deletedAt, reason, createdAt]
+      properties:
+        id: { type: string }
+        resourceType:
+          type: string
+          enum: [routine, occurrence]
+        resourceId: { type: string }
+        deletedAt: { type: string, format: date-time }
+        reason: { type: string }
+        createdAt: { type: string, format: date-time }
+    OtpSendRequest:
+      type: object
+      required: [email]
+      additionalProperties: false
+      properties:
+        email: { type: string, format: email }
+        name: { type: string, maxLength: 120 }
+        timezone: { type: string }
+    OtpVerifyRequest:
+      type: object
+      required: [email, code]
+      additionalProperties: false
+      properties:
+        email: { type: string, format: email }
+        code:
+          type: string
+          pattern: "^\\d{6}$"
+    SocialExchangeRequest:
+      type: object
+      required: [code, redirectUri]
+      additionalProperties: false
+      properties:
+        code: { type: string }
+        redirectUri: { type: string }
+    SettingsUpdateRequest:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        timezone: { type: string }
+        defaultReminderMinutes:
+          type: integer
+          minimum: 0
+          maximum: 1440
+        notificationPreferences:
+          type: object
+          additionalProperties: false
+          properties:
+            browserNotificationsEnabled: { type: boolean }
+    AnalyticsResponse:
+      type: object
+      required: [period, metrics, series, generatedAt]
+      properties:
+        period:
+          type: string
+          enum: [daily, weekly, monthly, yearly]
+        metrics:
+          type: object
+          additionalProperties: true
+        series:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        generatedAt: { type: string, format: date-time }
+    CronResponse:
+      type: object
+      required: [processedUsers, occurrencesGenerated, missedMarked, startedAt, finishedAt]
+      properties:
+        processedUsers: { type: integer }
+        occurrencesGenerated: { type: integer }
+        missedMarked: { type: integer }
+        startedAt: { type: string, format: date-time }
+        finishedAt: { type: string, format: date-time }
+    AuthMeResponseEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/EnvelopeBase"
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [user, settings]
+              properties:
+                user:
+                  $ref: "#/components/schemas/User"
+                settings:
+                  $ref: "#/components/schemas/UserSettings"
+    AuthSessionResponseEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/EnvelopeBase"
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [session, user]
+              properties:
+                session:
+                  type: object
+                  required: [token, expiresAt]
+                  properties:
+                    token: { type: string }
+                    expiresAt: { type: string, format: date-time }
+                user:
+                  $ref: "#/components/schemas/User"
+    OtpSendResponseEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/EnvelopeBase"
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [message, resendAfterSeconds]
+              properties:
+                message: { type: string }
+                resendAfterSeconds: { type: integer }
+    LogoutResponseEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/EnvelopeBase"
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [revoked]
+              properties:
+                revoked: { type: boolean }
+    SettingsResponseEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/EnvelopeBase"
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [settings]
+              properties:
+                settings:
+                  $ref: "#/components/schemas/UserSettings"
+    SettingsUpdateResponseEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/SettingsResponseEnvelope"
+    RoutineResponseEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/EnvelopeBase"
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [routine]
+              properties:
+                routine:
+                  $ref: "#/components/schemas/Routine"
+    RoutineListResponseEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/EnvelopeBase"
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [routines]
+              properties:
+                routines:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Routine"
+    RoutineDeleteResponseEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/EnvelopeBase"
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [deleted, routine, pendingOccurrencesRemoved, tombstone]
+              properties:
+                deleted: { type: boolean }
+                routine:
+                  $ref: "#/components/schemas/Routine"
+                pendingOccurrencesRemoved: { type: integer }
+                tombstone:
+                  $ref: "#/components/schemas/Tombstone"
+    OccurrenceListResponseEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/EnvelopeBase"
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [occurrences]
+              properties:
+                occurrences:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Occurrence"
+    OccurrenceGenerateResponseEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/EnvelopeBase"
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [windowStart, windowEnd, occurrencesGenerated, missedMarked]
+              properties:
+                windowStart:
+                  $ref: "#/components/schemas/LocalDate"
+                windowEnd:
+                  $ref: "#/components/schemas/LocalDate"
+                occurrencesGenerated: { type: integer }
+                missedMarked: { type: integer }
+    OccurrenceActionResponseEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/EnvelopeBase"
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [occurrence, log]
+              properties:
+                occurrence:
+                  $ref: "#/components/schemas/Occurrence"
+                log:
+                  $ref: "#/components/schemas/RoutineLog"
+    LogListResponseEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/EnvelopeBase"
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [logs]
+              properties:
+                logs:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/RoutineLog"
+    AnalyticsResponseEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/EnvelopeBase"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/AnalyticsResponse"
+    TombstoneListResponseEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/EnvelopeBase"
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [tombstones]
+              properties:
+                tombstones:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Tombstone"
+    CronResponseEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/EnvelopeBase"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/CronResponse"
+    EnvelopeBase:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+        meta:
+          $ref: "#/components/schemas/ApiMeta"
