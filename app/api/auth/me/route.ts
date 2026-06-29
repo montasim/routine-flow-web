@@ -32,3 +32,34 @@ export async function GET() {
     return NextResponse.json({ authenticated: false, error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function POST(request: Request) {
+  const context = 'Auth:SaveSettings';
+  try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { displayName, timezone, defaultReminderMinutes, notificationPreferences } = body;
+
+    if (displayName !== undefined) {
+      await DB.updateRecord('user', [{ field: 'id', value: user.id }], { name: displayName });
+    }
+
+    const settingsUpdate: any = {};
+    if (timezone !== undefined) settingsUpdate.timezone = timezone;
+    if (defaultReminderMinutes !== undefined) settingsUpdate.defaultReminderMinutes = defaultReminderMinutes;
+    if (notificationPreferences !== undefined) settingsUpdate.notificationPreferences = notificationPreferences;
+
+    if (Object.keys(settingsUpdate).length > 0) {
+      await DB.updateSettings(user.id, settingsUpdate);
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    logger.error(context, 'Error updating user settings', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

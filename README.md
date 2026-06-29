@@ -9,14 +9,15 @@ RoutineFlow is a sleek, state-of-the-art **Behavioral Measurement & Routine Trac
 * **Interactive Dashboard**: Track your occurrences for the day, mark tasks as completed or skipped, and view delays in real time.
 * **Multi-Engine Storage Layer**: Leverages native MongoDB collection queries with an automatic, queue-locked local JSON file backup mode (`db.json`) for environments without database access.
 * **Dual-Mode Secure Authentication**:
-  * **Social Login**: Google OAuth connection for rapid registration and profile synchronization.
-  * **Passwordless Credentials**: Custom OTP-based email verification plugin with temporary OTP store cache.
+  * **Social Login**: Google OAuth through the RoutineFlow web/API backend.
+  * **Passwordless Credentials**: MongoDB-backed 3-minute email OTP verification.
 * **Analytical Insights**:
-  * **Discipline Score**: Computes a performance score based on completion rate, consistency, delay penalty, and current streaks.
+  * **Discipline Score**: Computes a performance score based on completion rate, consistency, and delay penalty.
   * **Drift Metric**: Rolling comparison tracking behavior shifts between consecutive 30-day windows.
-  * **Weekly Stability**: Calculates the deviation and consistency of scheduled streaks.
+  * **Weekly Trend Analysis**: Calculates delay variation and completion trend direction.
   * **Annual Heatmap**: A GitHub-style yearly contribution chart mapped directly to completion percentages.
 * **Timezone Localization**: Full support for timezone-specific occurrence generation and scheduling (e.g. `Asia/Dhaka`).
+* **Mobile-Ready API**: Versioned `/api/v1` contract with OpenAPI documentation, bearer sessions, and idempotency support.
 
 ---
 
@@ -26,6 +27,7 @@ RoutineFlow is a sleek, state-of-the-art **Behavioral Measurement & Routine Trac
 * **Language**: TypeScript (Strict checks)
 * **Database**: MongoDB (Native Driver)
 * **Authentication**: Better Auth (with Social Providers and custom credentials plugins)
+* **Background Jobs**: Serverless-safe scheduled jobs, with Inngest support for durable notification orchestration
 * **Styling**: Tailwind CSS & Custom CSS variables design tokens (from RoutineFlow design specifications)
 * **Excel Export**: SheetJS (`xlsx`) for analytical data extraction
 
@@ -46,6 +48,15 @@ BETTER_AUTH_URL="http://localhost:3000"
 # Social Authentication Providers (Google)
 GOOGLE_CLIENT_ID="your-google-oauth-client-id"
 GOOGLE_CLIENT_SECRET="your-google-oauth-client-secret"
+
+# OTP Email Delivery (required for passwordless email login)
+RESEND_API_KEY="your-resend-api-key"
+EMAIL_FROM="RoutineFlow <auth@your-domain.com>"
+
+# Scheduled jobs / integrations
+SCHEDULED_JOB_SECRET="your-server-to-server-secret"
+INNGEST_EVENT_KEY="your-inngest-event-key"
+INNGEST_SIGNING_KEY="your-inngest-signing-key"
 ```
 
 ---

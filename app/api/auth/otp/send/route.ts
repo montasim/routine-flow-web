@@ -1,19 +1,17 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
-import { config } from '@/lib/config';
-
-// Global OTP store helper
-if (!(global as any).otpStore) {
-  (global as any).otpStore = new Map<string, { code: string; expires: number; name?: string; timezone?: string }>();
-}
-const otpStore = (global as any).otpStore;
+import { EmailConfigurationError, EmailDeliveryError, sendOtpEmail } from '@/lib/email';
+import { getOtpStore } from '@/lib/otp-store';
 
 export async function POST(request: Request) {
   const context = 'Auth:SendOtp';
   try {
     const { email, name, timezone } = await request.json();
+    const lowerEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+    const displayName = typeof name === 'string' ? name.trim() : undefined;
+    const userTimezone = typeof timezone === 'string' ? timezone : undefined;
 
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+    if (!lowerEmail || !/\S+@\S+\.\S+/.test(lowerEmail)) {
       return NextResponse.json({ success: false, error: 'Valid email address is required' }, { status: 400 });
     }
 
@@ -21,23 +19,25 @@ export async function POST(request: Request) {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expires = Date.now() + 10 * 60 * 1000; // 10 minutes expiry
 
-    // Save to store
-    otpStore.set(email.toLowerCase(), { code, expires, name, timezone });
+    await sendOtpEmail({ to: lowerEmail, code, name: displayName });
 
-    // Format console logging for developer
-    logger.info(context, `┌────────────────────────────────────────────────────────┐`);
-    logger.info(context, `│ OTP CODE GENERATED FOR: ${email.toLowerCase().padEnd(31)} │`);
-    logger.info(context, `│ VERIFICATION CODE: ${code.bold ? code.bold : code}                                  │`);
-    logger.info(context, `└────────────────────────────────────────────────────────┘`);
+    // Save to store only after the email provider accepts the message.
+    getOtpStore().set(lowerEmail, { code, expires, name: displayName, timezone: userTimezone });
 
-    // In non-production, we can return the code in the response so it is easy to copy/paste from the UI or tests
-    const responseData: any = { success: true, message: 'Verification code sent.' };
-    if (!config.isProduction) {
-      responseData.devOtp = code;
+    logger.info(context, `Verification code email sent to: ${lowerEmail}`);
+
+    return NextResponse.json({ success: true, message: 'Verification code sent to email.' });
+  } catch (err) {
+    if (err instanceof EmailConfigurationError) {
+      logger.error(context, 'OTP email delivery is not configured', err);
+      return NextResponse.json({ success: false, error: 'Email delivery is not configured.' }, { status: 503 });
     }
 
-    return NextResponse.json(responseData);
-  } catch (err) {
+    if (err instanceof EmailDeliveryError) {
+      logger.error(context, 'Failed to send OTP email', err);
+      return NextResponse.json({ success: false, error: 'Failed to send verification email. Try again shortly.' }, { status: 502 });
+    }
+
     logger.error(context, 'Error processing OTP request', err);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
