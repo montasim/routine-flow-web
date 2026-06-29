@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RoutineFlow — Mobile App</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -45,15 +45,41 @@
   --ease-standard:cubic-bezier(0.2,0,0,1);--ease-out:cubic-bezier(0.16,1,0.3,1);--ease-in:cubic-bezier(0.4,0,1,1);
   --press-scale:0.97;--hover-lift:-1px;
 }
+/* ── DARK MODE ── */
+[data-theme="dark"]{
+  --text-primary:#e8e6e1;--text-secondary:#9a9690;--text-muted:#6e6b66;--text-faint:#4a4845;--text-inverse:#16181d;--text-link:#7ba4ff;
+  --surface-app:#0f1011;--surface-card:#1a1c1e;--surface-sunken:#141617;--surface-inverse:#e8e6e1;
+  --border-subtle:#27292c;--border-default:#323538;--border-strong:#44474b;
+  --interactive-tint:#1a2040;
+  --shadow-xs:0 1px 1px rgba(0,0,0,.22);--shadow-sm:0 1px 2px rgba(0,0,0,.30),0 1px 1px rgba(0,0,0,.22);
+  --shadow-md:0 4px 10px -2px rgba(0,0,0,.38),0 2px 4px -2px rgba(0,0,0,.26);
+  --shadow-lg:0 12px 28px -6px rgba(0,0,0,.46),0 4px 10px -4px rgba(0,0,0,.30);
+  --shadow-pop:0 18px 44px -10px rgba(0,0,0,.58);
+  --ring-hairline:inset 0 0 0 1px var(--border-subtle);
+  --signal-50:#131d3b;--signal-100:#1c2850;
+  --completed-100:#0c2518;--missed-100:#28090a;--skipped-100:#281a06;--pending-100:#1a1d20;
+  --ramp-0:#181f19;--ramp-1:#172b1f;--ramp-2:#174030;--ramp-3:#1a6640;--ramp-4:#1f9d5b;
+  --status-completed:var(--completed-500);--status-completed-bg:var(--completed-100);
+  --status-pending:var(--pending-500);--status-pending-bg:var(--pending-100);
+  --status-missed:var(--missed-500);--status-missed-bg:var(--missed-100);
+  --status-skipped:var(--skipped-500);--status-skipped-bg:var(--skipped-100);
+}
+[data-theme="dark"] .tab.active{color:#7ba4ff;}
+[data-theme="dark"] .fab{border-color:var(--surface-card);}
+*,*::before,*::after{transition:background-color 180ms var(--ease-standard),border-color 180ms var(--ease-standard),color 80ms var(--ease-standard);}
+svg,path,circle,rect,line,polyline{transition:none!important;}
 *{box-sizing:border-box;}
-body{margin:0;background:var(--paper-100);font-family:var(--font-text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
-.phone{position:relative;width:390px;height:800px;flex:none;background:var(--surface-app);border-radius:46px;box-shadow:0 0 0 11px #0c0d10,0 0 0 13px #2a2c31,var(--shadow-pop);overflow:hidden;display:flex;flex-direction:column;}
-.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:116px;height:33px;background:#0c0d10;border-radius:999px;z-index:30;}
-.statusbar{height:52px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 6px;font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--text-primary);}
-.statusbar .icons{display:flex;align-items:center;gap:6px;}
+body{margin:0;background:var(--surface-app);font-family:var(--font-text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+[data-theme="dark"] body{background:var(--surface-app);}
+#root{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.phone{position:relative;flex:1;background:var(--surface-app);overflow:hidden;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);}
+.island{display:none;}
+.statusbar{display:none;}
+.statusbar .icons{display:none;}
 .screen{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
 .screen::-webkit-scrollbar{width:0;}
-.tabbar{flex:none;height:78px;display:flex;align-items:flex-start;justify-content:space-around;padding:10px 14px 0;background:rgba(250,249,246,0.92);backdrop-filter:blur(12px);border-top:1px solid var(--border-subtle);position:relative;}
+.tabbar{flex:none;display:flex;align-items:center;justify-content:space-around;padding:10px 14px env(safe-area-inset-bottom);background:rgba(250,249,246,0.95);border-top:1px solid var(--border-subtle);position:relative;}
+[data-theme="dark"] .tabbar{background:rgba(15,16,17,0.95);}
 .tab{display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;padding:4px 14px;color:var(--text-faint);transition:color var(--duration-fast) var(--ease-standard);}
 .tab.active{color:var(--interactive);}
 .tab span{font-size:10px;font-weight:600;letter-spacing:0.01em;}
@@ -61,6 +87,7 @@ body{margin:0;background:var(--paper-100);font-family:var(--font-text);min-heigh
 .fab:active{transform:translateX(-50%) scale(0.94);}
 @keyframes notifDrop{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
 @keyframes toastIn{from{opacity:0;transform:translateY(8px) scale(0.95)}to{opacity:1;transform:none}}
+@keyframes pulse-opacity{0%,100%{opacity:1}50%{opacity:.5}}
 </style>
 </head>
 <body>
@@ -717,12 +744,32 @@ function OccurrenceRow({
   delay = null,
   onComplete,
   onSkip,
+  onEdit,
   style = {}
 }) {
   const accent = CATEGORY_COLORS[category] || 'var(--border-strong)';
   const isPending = status === 'Pending';
   const dimmed = status === 'Missed' || status === 'Skipped';
+  
+  const [showEdit, setShowEdit] = React.useState(false);
+  const timerRef = React.useRef(null);
+  
+  const handlePointerDown = () => {
+    if (onEdit && !showEdit) {
+      timerRef.current = setTimeout(() => setShowEdit(true), 500);
+    }
+  };
+  const handlePointerUp = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  };
+
   return /*#__PURE__*/React.createElement("div", {
+    onPointerDown: handlePointerDown,
+    onPointerUp: handlePointerUp,
+    onPointerCancel: handlePointerUp,
+    onContextMenu: (e) => {
+      e.preventDefault();
+    },
     style: {
       display: 'flex',
       alignItems: 'center',
@@ -732,9 +779,58 @@ function OccurrenceRow({
       borderRadius: 'var(--radius-lg)',
       boxShadow: 'var(--ring-hairline)',
       opacity: dimmed ? 0.72 : 1,
+      position: 'relative',
       ...style
     }
-  }, /*#__PURE__*/React.createElement("span", {
+  }, showEdit && /*#__PURE__*/React.createElement("div", {
+    onClick: (e) => { e.stopPropagation(); setShowEdit(false); },
+    style: {
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(0,0,0,0.15)',
+      backdropFilter: 'blur(2px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 100
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: 'var(--surface-card)',
+      boxShadow: 'var(--shadow-xl)',
+      display: 'flex',
+      flexDirection: 'column',
+      borderRadius: 'var(--radius-xl)',
+      minWidth: 200,
+      border: '1px solid var(--border-subtle)',
+      overflow: 'hidden'
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: (e) => { e.stopPropagation(); setShowEdit(false); onEdit(); },
+    style: {
+      padding: '16px',
+      background: 'transparent',
+      color: 'var(--interactive)',
+      border: 'none',
+      borderBottom: '1px solid var(--border-subtle)',
+      textAlign: 'center',
+      fontSize: 'var(--text-md)',
+      fontWeight: 600,
+      cursor: 'pointer'
+    }
+  }, "Edit Routine"), /*#__PURE__*/React.createElement("button", {
+    onClick: (e) => { e.stopPropagation(); setShowEdit(false); },
+    style: {
+      padding: '16px',
+      background: 'transparent',
+      color: 'var(--text-primary)',
+      border: 'none',
+      textAlign: 'center',
+      fontSize: 'var(--text-md)',
+      fontWeight: 500,
+      cursor: 'pointer'
+    }
+  }, "Cancel"))), /*#__PURE__*/React.createElement("span", {
     style: {
       width: 4,
       alignSelf: 'stretch',
@@ -1898,9 +1994,9 @@ try { (() => {
 // Everything here mimics what would be DERIVED from routine_logs.
 window.RF_DATA = function () {
   const user = {
-    name: 'Ayaan Rahman',
+    name: 'Montasim Al Mamun',
     timezone: 'Asia/Dhaka',
-    email: 'ayaan@routineflow.app'
+    email: 'montasim@routineflow.app'
   };
 
   // Today's occurrences (status drives the Home screen)
@@ -2159,9 +2255,10 @@ try { (() => {
     label,
     children
   }) {
+    if (!children || children.length === 0) return null;
     return /*#__PURE__*/React.createElement("div", {
       style: {
-        marginBottom: 18
+        marginBottom: 24
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
@@ -2176,7 +2273,7 @@ try { (() => {
       style: {
         display: 'flex',
         flexDirection: 'column',
-        gap: 10
+        gap: 12
       }
     }, children));
   }
@@ -2197,7 +2294,11 @@ try { (() => {
       status: o.status,
       delay: o.delay,
       onComplete: () => setStatus(o.id, 'Completed', 2),
-      onSkip: () => setStatus(o.id, 'Skipped')
+      onSkip: () => {
+        if (window.confirm("Are you sure you want to skip this routine?")) {
+          setStatus(o.id, 'Skipped')
+        }
+      }
     });
     return /*#__PURE__*/React.createElement("div", {
       style: {
@@ -2780,7 +2881,7 @@ __ds_ns.Switch = __ds_scope.Switch;
 </script>
 <script>
 window.RF_DATA=(function(){
-  const user={name:'Ayaan Rahman',timezone:'Asia/Dhaka',email:'ayaan@routineflow.app'};
+  const user={name:'Montasim Al Mamun',timezone:'Asia/Dhaka',email:'montasim@routineflow.app'};
   const today=[
     {id:'o1',time:'06:30',title:'Wake & hydrate',category:'Health',status:'Completed',delay:-2},
     {id:'o2',time:'07:00',title:'Morning Gym',category:'Fitness',status:'Completed',delay:4},
@@ -2845,7 +2946,7 @@ function MobileGoogleButton({onClick,loading,label='Continue with Google'}){
       padding:'13px 16px',borderRadius:'var(--radius-md)',
       border:'1.5px solid var(--border-default)',background:'var(--surface-card)',
       cursor:'pointer',fontFamily:'var(--font-text)',fontSize:'var(--text-md)',fontWeight:500,
-      color:'var(--text-primary)',opacity:loading?0.6:1,
+      color:'var(--text-primary)',opacity:loading?0.6:1, overflow: 'hidden'
     }}>
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#4285F4"/>
@@ -3107,17 +3208,13 @@ function SignUpScreen({onSignUp, onGoSignIn}){
         <MobileDivider/>
         <div>
           <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-caps)',color:'var(--text-muted)',marginBottom:6}}>Full name</label>
-          <Input value={name} onChange={e=>setName(e.target.value)} placeholder="Ayaan Rahman" fullWidth/>
+          <Input value={name} onChange={e=>setName(e.target.value)} placeholder="Montasim Al Mamun" fullWidth/>
         </div>
         <div>
           <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-caps)',color:'var(--text-muted)',marginBottom:6}}>Email</label>
           <Input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" fullWidth/>
         </div>
-        <div>
-          <label style={{display:'block',fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-caps)',color:'var(--text-muted)',marginBottom:6}}>Timezone</label>
-          <Select fullWidth defaultValue="Asia/Dhaka" options={['Asia/Dhaka','Europe/London','America/New_York','Asia/Dubai','Asia/Tokyo']}/>
-          <div style={{marginTop:5,fontSize:'var(--text-xs)',color:'var(--text-faint)'}}>Auto-detected. Drives all routine scheduling.</div>
-        </div>
+
         <div style={{display:'flex',alignItems:'flex-start',gap:10}}>
           <div style={{marginTop:2}}><Checkbox checked={agreed} onChange={setAgreed} ariaLabel="Accept terms"/></div>
           <span style={{fontSize:'var(--text-sm)',color:'var(--text-secondary)',lineHeight:1.5}}>
@@ -3138,7 +3235,7 @@ function SignUpScreen({onSignUp, onGoSignIn}){
 
 
 /* ─── HOME SCREEN ──────────────────────────────────────────────────────── */
-function HomeScreen(){
+function HomeScreen({isLoading}){
   const [occ,setOcc]=React.useState(window.RF_DATA.today);
   const toast=useToast();
   function setStatus(id,status,delay=null){
@@ -3153,6 +3250,32 @@ function HomeScreen(){
   const morning=occ.filter(o=>o.time<'12:00');
   const afternoon=occ.filter(o=>o.time>='12:00');
 
+  if (isLoading) {
+    return (
+      <div style={{padding:'0 20px 24px'}}>
+        <header style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',padding:'8px 0 18px'}}>
+          <div>
+            <SkeletonBase width={100} height={12} style={{marginBottom:8}}/>
+            <SkeletonBase width={140} height={36}/>
+          </div>
+          <SkeletonBase width={40} height={16}/>
+        </header>
+        <SkeletonProgressCard/>
+        <div style={{display:'flex',gap:12,marginBottom:20,marginTop:24}}>
+          <SkeletonBase width={60} height={32} borderRadius="var(--radius-pill)"/>
+          <SkeletonBase width={80} height={32} borderRadius="var(--radius-pill)"/>
+          <SkeletonBase width={90} height={32} borderRadius="var(--radius-pill)"/>
+        </div>
+        <div style={{display:'flex',flexDirection:'column',gap:12}}>
+          <SkeletonRow/>
+          <SkeletonRow/>
+          <SkeletonRow/>
+          <SkeletonRow/>
+        </div>
+      </div>
+    );
+  }
+
   return(
     <div style={{padding:'0 20px 24px'}}>
       <header style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',padding:'8px 0 18px'}}>
@@ -3162,7 +3285,7 @@ function HomeScreen(){
         </div>
         <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-sm)',color:'var(--text-secondary)'}}>9:41</div>
       </header>
-      <Card padding="md" style={{display:'flex',alignItems:'center',gap:18,marginBottom:20}}>
+      <Card padding="md" style={{display:'flex',alignItems:'center',gap:18,marginBottom:24}}>
         <ProgressRing value={pct} size={76} thickness={7} centerLabel={pct+'%'} />
         <div style={{flex:1}}>
           <div style={{fontFamily:'var(--font-display)',fontSize:'var(--text-lg)',fontWeight:700,letterSpacing:'-0.02em'}}>{done} of {total} done</div>
@@ -3171,23 +3294,23 @@ function HomeScreen(){
         </div>
       </Card>
       {morning.length>0&&(
-        <div style={{marginBottom:18}}>
-          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-caps)',color:'var(--text-muted)',margin:'0 0 10px 2px'}}>Morning</div>
-          <div style={{display:'flex',flexDirection:'column',gap:10}}>
+        <div style={{marginBottom:24}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-caps)',color:'var(--text-muted)',margin:'0 0 12px 2px'}}>Morning</div>
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
             {morning.map(o=>(
               <OccurrenceRow key={o.id} time={o.time} title={o.title} category={o.category} status={o.status} delay={o.delay}
-                onComplete={()=>setStatus(o.id,'Completed',2)} onSkip={()=>setStatus(o.id,'Skipped')} />
+                onComplete={()=>setStatus(o.id,'Completed',2)} onSkip={()=>{if(window.confirm("Are you sure you want to skip this routine?")) setStatus(o.id,'Skipped')}} />
             ))}
           </div>
         </div>
       )}
       {afternoon.length>0&&(
         <div>
-          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-caps)',color:'var(--text-muted)',margin:'0 0 10px 2px'}}>Afternoon & evening</div>
-          <div style={{display:'flex',flexDirection:'column',gap:10}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-caps)',color:'var(--text-muted)',margin:'0 0 12px 2px'}}>Afternoon & evening</div>
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
             {afternoon.map(o=>(
               <OccurrenceRow key={o.id} time={o.time} title={o.title} category={o.category} status={o.status} delay={o.delay}
-                onComplete={()=>setStatus(o.id,'Completed',2)} onSkip={()=>setStatus(o.id,'Skipped')} />
+                onComplete={()=>setStatus(o.id,'Completed',2)} onSkip={()=>{if(window.confirm("Are you sure you want to skip this routine?")) setStatus(o.id,'Skipped')}} />
             ))}
           </div>
         </div>
@@ -3197,9 +3320,10 @@ function HomeScreen(){
 }
 
 /* ─── CALENDAR SCREEN ───────────────────────────────────────────────────── */
-function CalendarScreen(){
+function CalendarScreen({isLoading}){
   const month=window.RF_DATA.month;
   const [sel,setSel]=React.useState(21);
+  const [mode,setMode]=React.useState('month');
   const DOW=['M','T','W','T','F','S','S'];
   const offset=3;
   function dayColor(d){
@@ -3216,13 +3340,40 @@ function CalendarScreen(){
     {time:'09:30',title:'Deep work block',category:'Work',status:'Missed',delay:null},
     {time:'22:30',title:'Read 20 minutes',category:'Mind',status:'Skipped',delay:null},
   ];
+
+  if (isLoading) {
+    return(
+      <div style={{padding:'0 20px 24px'}}>
+        <header style={{padding:'16px 0 12px'}}>
+          <SkeletonBase width={60} height={12} style={{marginBottom:4}}/>
+          <SkeletonBase width={120} height={36}/>
+        </header>
+        <div style={{marginBottom:24}}>
+          <SkeletonBase width="100%" height={38} borderRadius="var(--radius-lg)"/>
+        </div>
+        <Card padding="md" style={{marginBottom:24,height:280,display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <SkeletonBase width="90%" height="90%"/>
+        </Card>
+        <div style={{display:'flex',flexDirection:'column',gap:12}}>
+          <SkeletonBase width={100} height={12} style={{marginBottom:4}}/>
+          <SkeletonRow/>
+          <SkeletonRow/>
+          <SkeletonRow/>
+        </div>
+      </div>
+    );
+  }
+
   return(
     <div style={{padding:'0 20px 24px'}}>
-      <header style={{padding:'8px 0 18px'}}>
-        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-caps)',color:'var(--text-muted)'}}>2026</div>
-        <h1 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-3xl)',fontWeight:700,letterSpacing:'-0.02em',margin:'4px 0 0'}}>June</h1>
+      <header style={{padding:'16px 0 12px'}}>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-caps)',color:'var(--text-muted)',marginBottom:4}}>2026</div>
+        <h1 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-3xl)',fontWeight:700,letterSpacing:'-0.02em',margin:0}}>June</h1>
       </header>
-      <Card padding="md" style={{marginBottom:18}}>
+      <div style={{marginBottom:24}}>
+        <Tabs value={mode} onChange={setMode} items={[{value:'day',label:'Day'},{value:'week',label:'Week'},{value:'month',label:'Month'},{value:'year',label:'Year'}]}/>
+      </div>
+      <Card padding="md" style={{marginBottom:24}}>
         <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:6,marginBottom:8}}>
           {DOW.map((d,i)=><div key={i} style={{textAlign:'center',fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',color:'var(--text-faint)'}}>{d}</div>)}
         </div>
@@ -3256,7 +3407,7 @@ function CalendarScreen(){
 }
 
 /* ─── ANALYTICS SCREEN ──────────────────────────────────────────────────── */
-function AnalyticsScreen(){
+function AnalyticsScreen({isLoading}){
   const D=window.RF_DATA;
   const [tab,setTab]=React.useState('week');
   function Stat({label,value,tone}){
@@ -3267,12 +3418,35 @@ function AnalyticsScreen(){
       </div>
     );
   }
+
+  if (isLoading) {
+    return(
+      <div style={{padding:'0 20px 24px'}}>
+        <header style={{padding:'8px 0 16px'}}>
+          <SkeletonBase width={140} height={36}/>
+        </header>
+        <div style={{marginBottom:24}}>
+          <SkeletonBase width="100%" height={38} borderRadius="var(--radius-lg)"/>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+          <SkeletonMetricTile/>
+          <SkeletonMetricTile/>
+          <SkeletonMetricTile/>
+          <SkeletonMetricTile/>
+        </div>
+        <Card padding="md" style={{height:180,display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <SkeletonBase width="90%" height="90%"/>
+        </Card>
+      </div>
+    );
+  }
+
   return(
     <div style={{padding:'0 20px 24px'}}>
       <header style={{padding:'8px 0 16px'}}>
         <h1 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-3xl)',fontWeight:700,letterSpacing:'-0.02em',margin:0}}>Analytics</h1>
       </header>
-      <div style={{marginBottom:18}}>
+      <div style={{marginBottom:24}}>
         <Tabs value={tab} onChange={setTab} items={[{value:'day',label:'Daily'},{value:'week',label:'Weekly'},{value:'month',label:'Monthly'},{value:'year',label:'Yearly'}]}/>
       </div>
       {tab==='day'&&(
@@ -3354,35 +3528,79 @@ function AnalyticsScreen(){
 }
 
 /* ─── ROUTINES SCREEN ───────────────────────────────────────────────────── */
-function RoutinesScreen({onAddNew}){
+function CategoryListScreen({onBack, onAddNew, onSelectCategory}){
   const D=window.RF_DATA;
-  const catColor={Fitness:'var(--signal-500)',Health:'var(--completed-600)',Work:'var(--skipped-600)',Mind:'var(--ink-700)'};
+  const categories = [
+    {name:'Health', icon:'heart', routines:2, rate:'85%', top:'Morning Walk'},
+    {name:'Fitness', icon:'activity', routines:3, rate:'92%', top:'Morning Gym'},
+    {name:'Work', icon:'briefcase', routines:5, rate:'74%', top:'Deep work block'},
+    {name:'Mind', icon:'brain', routines:2, rate:'61%', top:'Language practice'},
+  ];
   return(
-    <div style={{padding:'0 20px 24px'}}>
-      <header style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 0 18px'}}>
-        <h1 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-3xl)',fontWeight:700,letterSpacing:'-0.02em',margin:0}}>Routines</h1>
+    <div style={{background:'var(--surface-bg)',minHeight:'100%',paddingBottom:120}}>
+      <header style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 16px 18px'}}>
+        <button onClick={onBack} style={{background:'none',border:'none',color:'var(--interactive)',display:'flex',alignItems:'center',gap:4,cursor:'pointer',fontSize:'var(--text-md)'}}>
+          <Icon name="chevron-left" size={20}/> Back
+        </button>
+        <h1 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-xl)',fontWeight:700,margin:'0'}}>Categories</h1>
         <button onClick={onAddNew} style={{width:36,height:36,borderRadius:'var(--radius-md)',background:'var(--interactive)',border:'none',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
           <Icon name="plus" size={20}/>
         </button>
       </header>
-      <div style={{display:'flex',flexDirection:'column',gap:10}}>
-        {D.routines.map(r=>(
-          <Card key={r.id} padding="md" style={{display:'flex',alignItems:'center',gap:14}}>
-            <div style={{width:4,height:40,borderRadius:'var(--radius-pill)',background:catColor[r.category]||'var(--ink-400)',flexShrink:0}}/>
+      <div style={{display:'flex',flexDirection:'column',gap:12,padding:'0 20px'}}>
+        {categories.map(c=>(
+          <div key={c.name} onClick={()=>onSelectCategory(c)} style={{display:'flex',alignItems:'center',gap:14,padding:'16px',background:'var(--surface-card)',borderRadius:'var(--radius-lg)',boxShadow:'var(--ring-hairline)',cursor:'pointer'}}>
+            <div style={{width:40,height:40,borderRadius:'50%',background:'var(--surface-sunken)',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--interactive)'}}>
+              <Icon name={c.icon} size={20}/>
+            </div>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontWeight:600,fontSize:'var(--text-md)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{r.title}</div>
-              <div style={{display:'flex',gap:10,marginTop:4,alignItems:'center'}}>
-                <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-muted)'}}>{r.time}</span>
-                <span style={{fontSize:'var(--text-xs)',color:'var(--text-faint)'}}>·</span>
-                <span style={{fontSize:'var(--text-xs)',color:'var(--text-secondary)'}}>{r.recurrence}</span>
-              </div>
+              <div style={{fontWeight:600,fontSize:'var(--text-md)'}}>{c.name}</div>
+              <div style={{fontSize:'var(--text-xs)',color:'var(--text-secondary)',marginTop:4}}>{c.routines} routines · Top: {c.top}</div>
             </div>
             <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4}}>
-              <StreakChip days={r.streak} best={r.best} size="sm"/>
-              <span style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-xs)',color:'var(--text-muted)'}}>{Math.round(r.consistency*100)}%</span>
+              <span style={{fontWeight:600,color:'var(--completed-600)'}}>{c.rate}</span>
+              <Icon name="chevron-right" size={16}/>
             </div>
-          </Card>
+          </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function CategoryDetailScreen({category, onBack, onEditRoutine}){
+  const D=window.RF_DATA;
+  const routines = D.today.filter(r => r.category === category.name);
+  return(
+    <div style={{background:'var(--surface-bg)',minHeight:'100%',paddingBottom:120}}>
+      <header style={{display:'flex',alignItems:'center',padding:'8px 16px 18px'}}>
+        <button onClick={onBack} style={{background:'none',border:'none',color:'var(--interactive)',display:'flex',alignItems:'center',gap:4,cursor:'pointer',fontSize:'var(--text-md)'}}>
+          <Icon name="chevron-left" size={20}/> Back
+        </button>
+        <h1 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-xl)',fontWeight:700,margin:'0 auto',transform:'translateX(-24px)'}}>{category.name}</h1>
+        <button onClick={() => {
+          if (window.confirm("Are you sure you want to delete this category?")) {
+            onBack();
+          }
+        }} style={{background:'none',border:'none',color:'var(--missed-600)',cursor:'pointer'}}>
+          <Icon name="trash-2" size={20}/>
+        </button>
+      </header>
+      <div style={{display:'flex',flexDirection:'column',gap:24}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,padding:'16px 20px 0'}}>
+          <MetricTile label="Completion Rate" value={category.rate} tone="completed" />
+          <MetricTile label="Best Streak" value="12" unit="Days" />
+          <MetricTile label="Routines" value={category.routines.toString()} />
+          <MetricTile label="Time Spent" value="14h" unit="20m" />
+        </div>
+        <div style={{padding:'0 20px'}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-caps)',color:'var(--text-muted)',marginBottom:12}}>Top Routines</div>
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            {routines.map(r => (
+              <OccurrenceRow key={r.id} time={r.time} title={r.title} category={r.category} status={r.status} delay={r.delay} onEdit={() => onEditRoutine(r)} />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -3467,7 +3685,7 @@ function MobileActionSheet({config, onConfirm, onCancel}){
   );
 }
 
-function SettingsScreen({onSignOut, onShowSheet}){
+function SettingsScreen({onSignOut, onShowSheet, theme, onToggleTheme, onOpenCategories, isLoading}){
   const U=window.RF_DATA.user;
   const toast=useToast();
   const [useGlobal,setUseGlobal]=React.useState(true);
@@ -3499,64 +3717,110 @@ function SettingsScreen({onSignOut, onShowSheet}){
     );
   }
   function GroupLabel({children}){
-    return <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-caps)',color:'var(--text-muted)',margin:'20px 2px 8px'}}>{children}</div>;
+    return <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-caps)',color:'var(--text-muted)',margin:'24px 2px 12px'}}>{children}</div>;
+  }
+
+  if (isLoading) {
+    return(
+      <div style={{padding:'0 20px 24px'}}>
+        <header style={{padding:'16px 0 24px'}}>
+          <SkeletonProfile/>
+        </header>
+        <div style={{marginBottom:24}}>
+          <SkeletonBase width={100} height={12} style={{marginBottom:12}}/>
+          <Card padding="md">
+            <div style={{display:'flex',flexDirection:'column',gap:16}}>
+              <SkeletonBase width="100%" height={20}/>
+              <SkeletonBase width="100%" height={20}/>
+              <SkeletonBase width="100%" height={20}/>
+            </div>
+          </Card>
+        </div>
+        <div style={{marginBottom:24}}>
+          <SkeletonBase width={100} height={12} style={{marginBottom:12}}/>
+          <Card padding="md">
+            <div style={{display:'flex',flexDirection:'column',gap:16}}>
+              <SkeletonBase width="100%" height={20}/>
+              <SkeletonBase width="100%" height={20}/>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   return(
     <div style={{padding:'0 20px 24px'}}>
-      <header style={{padding:'8px 0 8px'}}>
-        <h1 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-3xl)',fontWeight:700,letterSpacing:'-0.02em',margin:0}}>Settings</h1>
+      <header style={{padding:'16px 0 24px'}}>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-caps)',color:'var(--text-muted)'}}>ACCOUNT & PREFERENCES</div>
+        <h1 style={{fontFamily:'var(--font-display)',fontSize:'var(--text-3xl)',fontWeight:700,letterSpacing:'-0.02em',margin:'4px 0 0'}}>Settings</h1>
       </header>
-      <Card padding="md" style={{display:'flex',alignItems:'center',gap:14,marginTop:8}}>
+      <Card padding="md" style={{display:'flex',alignItems:'center',gap:14,marginBottom:24}}>
         <Avatar name={U.name} size={48}/>
         <div style={{flex:1}}>
-          <div style={{fontFamily:'var(--font-display)',fontSize:'var(--text-lg)',fontWeight:600}}>{U.name}</div>
-          <div style={{fontSize:'var(--text-sm)',color:'var(--text-secondary)'}}>{U.email}</div>
+          <div style={{display:'flex',alignItems:'center',gap:6}}>
+            <div style={{fontFamily:'var(--font-display)',fontSize:'var(--text-lg)',fontWeight:600}}>{U.name}</div>
+            <button style={{background:'none',border:'none',color:'var(--interactive)',cursor:'pointer',padding:0,display:'flex'}}>
+              <Icon name="edit-2" size={14}/>
+            </button>
+          </div>
+          <div style={{fontSize:'var(--text-sm)',color:'var(--text-secondary)',marginTop:2}}>{U.email}</div>
         </div>
-        <Badge tone="signal" mono>PRO</Badge>
       </Card>
-      <GroupLabel>Time</GroupLabel>
+      
+      <GroupLabel>PREFERENCES</GroupLabel>
       <Card padding="md">
+        <Row label="Push Notifications" sub="Fire even when the app is closed" control={<Switch checked={notif} onChange={setNotif} ariaLabel="Notifications"/>}/>
+        <div style={{padding:'14px 0',borderBottom:'1px solid var(--border-subtle)'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div style={{fontSize:'var(--text-md)',fontWeight:500}}>Dark Theme</div>
+            <ThemeToggle theme={theme} onToggle={onToggleTheme}/>
+          </div>
+        </div>
         <Row label="Timezone" sub="All scheduling is interpreted here" control={<Select fullWidth={false} defaultValue="Asia/Dhaka" options={['Asia/Dhaka','Europe/London','America/New_York','Asia/Dubai']} style={{width:168}}/>} last/>
       </Card>
-      <GroupLabel>Reminders</GroupLabel>
-      <Card padding="md">
-        <Row label="Notifications" sub="Fire even when the app is closed" control={<Switch checked={notif} onChange={setNotif} ariaLabel="Notifications"/>}/>
-        <Row label="Use global reminder" sub="Apply one offset to every routine" control={<Switch checked={useGlobal} onChange={setUseGlobal} ariaLabel="Use global reminder"/>}/>
-        <Row label="Reminder offset" sub="Minutes before scheduled time" control={<Select fullWidth={false} defaultValue="15" options={[{value:'5',label:'5 min'},{value:'10',label:'10 min'},{value:'15',label:'15 min'},{value:'30',label:'30 min'}]} style={{width:120}}/>} last/>
+
+      <GroupLabel>DATA</GroupLabel>
+      <Card padding="md" style={{marginBottom:24}}>
+        <button onClick={onOpenCategories} style={{width:'100%',padding:'14px 0',border:'none',borderBottom:'1px solid var(--border-subtle)',background:'transparent',cursor:'pointer',display:'flex',alignItems:'center',gap:14}}>
+          <div style={{width:24,display:'flex',justifyContent:'center',color:'var(--interactive)'}}><Icon name="grid" size={20}/></div>
+          <div style={{flex:1,textAlign:'left',fontSize:'var(--text-md)',fontWeight:500}}>Categories</div>
+          <Icon name="chevron-right" size={18} color="var(--text-faint)"/>
+        </button>
+        <button onClick={handleExport} style={{width:'100%',padding:'14px 0',border:'none',background:'transparent',cursor:'pointer',display:'flex',alignItems:'center',gap:14}}>
+          <div style={{width:24,display:'flex',justifyContent:'center',color:'var(--interactive)'}}><Icon name="download" size={20}/></div>
+          <div style={{flex:1,textAlign:'left',fontSize:'var(--text-md)',fontWeight:500}}>Export Data</div>
+          <Icon name="chevron-right" size={18} color="var(--text-faint)"/>
+        </button>
       </Card>
-      <GroupLabel>Streaks</GroupLabel>
-      <Card padding="md">
-        <Row label="Skip breaks streak" sub="Off — a skip pauses, it won't reset" control={<Switch checked={skipBreaks} onChange={setSkipBreaks} ariaLabel="Skip breaks streak"/>} last/>
-      </Card>
-      <div style={{marginTop:22,display:'flex',flexDirection:'column',gap:10}}>
-        <Button variant="secondary" fullWidth onClick={handleExport}>Export data (.xlsx)</Button>
-        <Button variant="ghost" fullWidth onClick={handleSignOut} style={{color:'var(--missed-600)'}}>Sign out</Button>
-      </div>
+
+      <Button variant="ghost" fullWidth onClick={handleSignOut} style={{color:'var(--missed-600)'}}>Sign out</Button>
     </div>
   );
 }
 
 /* ─── ADD ROUTINE SHEET ─────────────────────────────────────────────────── */
-function AddRoutineSheet({onClose}){
+function AddRoutineSheet({occurrenceToEdit, onClose, onDelete}){
   return(
     <div style={{position:'absolute',inset:0,background:'rgba(22,24,29,0.4)',zIndex:50,display:'flex',alignItems:'flex-end'}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
       <div style={{background:'var(--surface-card)',borderRadius:'var(--radius-xl) var(--radius-xl) 0 0',padding:'20px 20px 36px',width:'100%',boxShadow:'var(--shadow-pop)'}}>
         <div style={{width:40,height:4,background:'var(--border-default)',borderRadius:999,margin:'0 auto 20px'}}/>
-        <div style={{fontFamily:'var(--font-display)',fontSize:'var(--text-xl)',fontWeight:700,marginBottom:20}}>New routine</div>
+        <div style={{fontFamily:'var(--font-display)',fontSize:'var(--text-xl)',fontWeight:700,marginBottom:20}}>
+          {occurrenceToEdit ? "Edit routine" : "New routine"}
+        </div>
         <div style={{display:'flex',flexDirection:'column',gap:14}}>
           <div>
             <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-caps)',color:'var(--text-muted)',marginBottom:6}}>Title</div>
-            <Input placeholder="e.g. Morning run" fullWidth/>
+            <Input placeholder="e.g. Morning run" defaultValue={occurrenceToEdit?.title || ""} fullWidth/>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
             <div>
               <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-caps)',color:'var(--text-muted)',marginBottom:6}}>Time</div>
-              <Input type="time" defaultValue="08:00" fullWidth/>
+              <Input type="time" defaultValue={occurrenceToEdit?.time || "08:00"} fullWidth/>
             </div>
             <div>
               <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-caps)',color:'var(--text-muted)',marginBottom:6}}>Category</div>
-              <Select defaultValue="Health" options={['Health','Fitness','Work','Mind','Personal']} fullWidth/>
+              <Select defaultValue={occurrenceToEdit?.category || "Health"} options={['Health','Fitness','Work','Mind','Personal']} fullWidth/>
             </div>
           </div>
           <div>
@@ -3567,9 +3831,87 @@ function AddRoutineSheet({onClose}){
             <Button variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
             <Button variant="primary" fullWidth onClick={onClose}>Save routine</Button>
           </div>
+          {occurrenceToEdit && (
+            <div style={{marginTop:8}}>
+              <Button variant="secondary" fullWidth onClick={() => {
+                if (window.confirm("Are you sure you want to delete this routine?")) {
+                  if(onDelete) onDelete();
+                  onClose();
+                }
+              }} style={{color: 'var(--missed-600)'}}>
+                Delete Routine
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
+  );
+}
+
+/* ─── ADD CATEGORY SHEET ────────────────────────────────────────────────── */
+function AddCategorySheet({onClose}){
+  return(
+    <div style={{position:'absolute',inset:0,background:'rgba(22,24,29,0.4)',zIndex:50,display:'flex',alignItems:'flex-end'}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div style={{background:'var(--surface-card)',borderRadius:'var(--radius-xl) var(--radius-xl) 0 0',padding:'20px 20px 36px',width:'100%',boxShadow:'var(--shadow-pop)'}}>
+        <div style={{width:40,height:4,background:'var(--border-default)',borderRadius:999,margin:'0 auto 20px'}}/>
+        <div style={{fontFamily:'var(--font-display)',fontSize:'var(--text-xl)',fontWeight:700,marginBottom:20}}>
+          New Category
+        </div>
+        <div style={{display:'flex',flexDirection:'column',gap:14}}>
+          <div>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-caps)',color:'var(--text-muted)',marginBottom:6}}>Category Name</div>
+            <Input placeholder="e.g. Finances" fullWidth/>
+          </div>
+          <div>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:'var(--text-2xs)',textTransform:'uppercase',letterSpacing:'var(--tracking-caps)',color:'var(--text-muted)',marginBottom:6}}>Icon</div>
+            <Select defaultValue="dollar-sign" options={['dollar-sign','briefcase','heart','brain','activity']} fullWidth/>
+          </div>
+          <div style={{marginTop:6,display:'flex',gap:10}}>
+            <Button variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
+            <Button variant="primary" fullWidth onClick={onClose}>Save Category</Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── THEME SYSTEM ───────────────────────────────────────────────────────── */
+function getInitialTheme(){
+  try{return localStorage.getItem('rf_theme')||'light';}catch{return 'light';}
+}
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  try{localStorage.setItem('rf_theme',t);}catch{}
+}
+
+function ThemeToggle({theme,onToggle}){
+  const isDark=theme==='dark';
+  return(
+    <button onClick={onToggle} aria-label={isDark?'Light mode':'Dark mode'}
+      style={{display:'flex',alignItems:'center',gap:10,background:'none',border:'none',cursor:'pointer',padding:'12px 0',width:'100%'}}>
+      <span style={{display:'inline-flex',color:'var(--text-muted)'}}>
+        <Icon name={isDark?'moon':'sun'} size={20}/>
+      </span>
+      <span style={{flex:1,fontSize:'var(--text-md)',fontWeight:500,color:'var(--text-primary)',textAlign:'left'}}>
+        {isDark?'Dark mode':'Light mode'}
+      </span>
+      {/* Track */}
+      <span style={{
+        display:'inline-flex',width:44,height:24,borderRadius:999,
+        background:isDark?'var(--interactive)':'var(--border-default)',
+        padding:3,alignItems:'center',flexShrink:0,
+        transition:'background 180ms var(--ease-standard)',
+      }}>
+        <span style={{
+          width:18,height:18,borderRadius:'50%',background:'#fff',flexShrink:0,
+          transform:isDark?'translateX(20px)':'translateX(0)',
+          transition:'transform 200ms var(--ease-out)',
+          boxShadow:'0 1px 3px rgba(0,0,0,0.25)',
+        }}/>
+      </span>
+    </button>
   );
 }
 
@@ -3666,15 +4008,68 @@ function PushNotification({notif,onDismiss}){
   );
 }
 
-function MobileApp({onSignOut}){
+/* ─── SKELETON LOADERS ──────────────────────────────────────────────────── */
+function SkeletonBase({width, height, borderRadius, style}){
+  return <div style={{width, height, borderRadius: borderRadius || 'var(--radius-md)', background: 'var(--surface-sunken)', animation: 'pulse-opacity 1.5s infinite var(--ease-standard)', ...style}}/>;
+}
+
+function SkeletonRow(){
+  return(
+    <div style={{display:'flex',alignItems:'center',gap:'var(--space-5)',padding:'var(--space-5)',background:'var(--surface-card)',borderRadius:'var(--radius-lg)',boxShadow:'var(--ring-hairline)'}}>
+      <SkeletonBase width={4} height={40} borderRadius="var(--radius-pill)"/>
+      <div style={{width:56}}><SkeletonBase width={40} height={18}/><SkeletonBase width={30} height={12} style={{marginTop:4}}/></div>
+      <div style={{flex:1}}><SkeletonBase width="70%" height={20}/></div>
+      <SkeletonBase width={24} height={24} borderRadius="50%"/>
+    </div>
+  );
+}
+
+function SkeletonProgressCard(){
+  return(
+    <Card padding="none" style={{display:'flex',gap:24,padding:'24px 28px',alignItems:'center'}}>
+      <div style={{flex:1}}>
+        <SkeletonBase width="60%" height={16} style={{marginBottom:10}}/>
+        <SkeletonBase width="80%" height={28} style={{marginBottom:8}}/>
+        <SkeletonBase width="40%" height={14}/>
+      </div>
+      <SkeletonBase width={88} height={88} borderRadius="50%"/>
+    </Card>
+  );
+}
+
+function SkeletonMetricTile(){
+  return(
+    <div style={{background:'var(--surface-card)',borderRadius:'var(--radius-lg)',padding:'16px 20px',boxShadow:'var(--ring-hairline)',display:'flex',flexDirection:'column'}}>
+      <SkeletonBase width="60%" height={14} style={{marginBottom:12}}/>
+      <SkeletonBase width="80%" height={32}/>
+    </div>
+  );
+}
+
+function SkeletonProfile(){
+  return(
+    <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:24,paddingTop:12}}>
+      <SkeletonBase width={64} height={64} borderRadius="50%"/>
+      <div style={{flex:1}}>
+        <SkeletonBase width="50%" height={20} style={{marginBottom:6}}/>
+        <SkeletonBase width="70%" height={16}/>
+      </div>
+    </div>
+  );
+}
+
+function MobileApp({onSignOut, theme, onToggleTheme}){
   const [tab,setTab]=React.useState('home');
+  const [selectedCategory,setSelectedCategory]=React.useState(null);
   const [showAdd,setShowAdd]=React.useState(false);
+  const [showAddCategory,setShowAddCategory]=React.useState(false);
+  const [editingOcc,setEditingOcc]=React.useState(null);
   const [pushNotif,setPushNotif]=React.useState(null);
-  const [actionSheet,setActionSheet]=React.useState(null); // {config, onConfirm}
+  const [actionSheet,setActionSheet]=React.useState(null);
+  const [isLoading,setIsLoading]=React.useState(true);
   const screenRef=React.useRef(null);
   React.useEffect(()=>{if(screenRef.current)screenRef.current.scrollTop=0;},[tab]);
 
-  // Demo: show a push notification 2s after mount
   React.useEffect(()=>{
     const t=setTimeout(()=>{
       setPushNotif({
@@ -3683,24 +4078,26 @@ function MobileApp({onSignOut}){
         time:'6:45 AM',
       });
     },2000);
-    return()=>clearTimeout(t);
+    const loaderT=setTimeout(()=>setIsLoading(false),1500);
+    return()=>{clearTimeout(t);clearTimeout(loaderT);}
   },[]);
 
-  function showSheet(config, onConfirm){
-    setActionSheet({config, onConfirm});
-  }
+  function showSheet(config, onConfirm){setActionSheet({config, onConfirm});}
   function dismissSheet(){setActionSheet(null);}
 
   return(
     <ToastProvider>
       <div className="screen" ref={screenRef} style={{position:'relative'}}>
         {pushNotif&&<PushNotification notif={pushNotif} onDismiss={()=>setPushNotif(null)}/>}
-        {tab==='home'&&<HomeScreen/>}
-        {tab==='calendar'&&<CalendarScreen/>}
-        {tab==='routines'&&<RoutinesScreen onAddNew={()=>setShowAdd(true)}/>}
-        {tab==='analytics'&&<AnalyticsScreen/>}
-        {tab==='settings'&&<SettingsScreen onShowSheet={showSheet} onSignOut={onSignOut}/>}
+        {tab==='home'&&<HomeScreen isLoading={isLoading}/>}
+        {tab==='calendar'&&<CalendarScreen isLoading={isLoading}/>}
+        {tab==='categories'&&!selectedCategory&&<CategoryListScreen onBack={()=>setTab('settings')} onAddNew={()=>setShowAddCategory(true)} onSelectCategory={setSelectedCategory} isLoading={isLoading}/>}
+        {tab==='categories'&&selectedCategory&&<CategoryDetailScreen category={selectedCategory} onBack={()=>setSelectedCategory(null)} onEditRoutine={setEditingOcc}/>}
+        {tab==='analytics'&&<AnalyticsScreen isLoading={isLoading}/>}
+        {tab==='settings'&&<SettingsScreen onShowSheet={showSheet} onSignOut={onSignOut} theme={theme} onToggleTheme={onToggleTheme} onOpenCategories={()=>setTab('categories')} isLoading={isLoading}/>}
         {showAdd&&<AddRoutineSheet onClose={()=>setShowAdd(false)}/>}
+        {showAddCategory&&<AddCategorySheet onClose={()=>setShowAddCategory(false)}/>}
+        {editingOcc&&<AddRoutineSheet occurrenceToEdit={editingOcc} onClose={()=>setEditingOcc(null)} onDelete={()=>{/* mock delete */}}/>}
       </div>
       <nav className="tabbar">
         {TABS.slice(0,2).map(t=>(
@@ -3717,7 +4114,6 @@ function MobileApp({onSignOut}){
         </button>
         <button className="fab" aria-label="New routine" onClick={()=>setShowAdd(true)}><Icon name="plus" size={26}/></button>
       </nav>
-      {/* Action sheet renders here — overlays screen + tabbar at phone level */}
       {actionSheet&&(
         <MobileActionSheet
           config={actionSheet.config}
@@ -3731,14 +4127,12 @@ function MobileApp({onSignOut}){
 
 function App(){
   const [page,setPage]=React.useState('signin');
+  const [theme,setTheme]=React.useState(getInitialTheme);
+  React.useEffect(()=>{applyTheme(theme);},[theme]);
+  function toggleTheme(){setTheme(t=>{const n=t==='light'?'dark':'light';return n;});}
 
   return(
     <div className="phone">
-      <div className="island"/>
-      <div className="statusbar">
-        <span>9:41</span>
-        <span className="icons"><Icon name="signal" size={15}/><Icon name="wifi" size={15}/><Icon name="battery-full" size={17}/></span>
-      </div>
       {page==='signin'&&(
         <div className="screen">
           <SignInScreen onSignIn={()=>setPage('app')} onGoSignUp={()=>setPage('signup')}/>
@@ -3749,7 +4143,7 @@ function App(){
           <SignUpScreen onSignUp={()=>setPage('app')} onGoSignIn={()=>setPage('signin')}/>
         </div>
       )}
-      {page==='app'&&<MobileApp onSignOut={()=>setPage('signin')}/>}
+      {page==='app'&&<MobileApp onSignOut={()=>setPage('signin')} theme={theme} onToggleTheme={toggleTheme}/>}
     </div>
   );
 }
