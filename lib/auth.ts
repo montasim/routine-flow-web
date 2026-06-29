@@ -4,6 +4,7 @@ import { logger } from "./logger";
 import { headers } from "next/headers";
 import { config } from "./config";
 import { DEFAULT_TIMEZONE, DEFAULT_REMINDER_MINUTES } from "./constant";
+import { getOtpStore } from "./otp-store";
 import { createAuthEndpoint, APIError } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
 import * as z from "zod";
@@ -59,17 +60,14 @@ const credentialsPlugin = () => {
         const lowerEmail = email.toLowerCase();
         
         // 1. Verify OTP code from global store
-        const isAyaanBypass = lowerEmail === "ayaan@routineflow.app" && code === "123456";
-        const entry = (global as any).otpStore?.get(lowerEmail);
-        if (!isAyaanBypass && (!entry || entry.code !== code || entry.expires < Date.now())) {
+        const entry = getOtpStore().get(lowerEmail);
+        if (!entry || entry.code !== code || entry.expires < Date.now()) {
           logger.warn('Auth:Authorize', `OTP verification failed for: ${email}`);
           throw new APIError("UNAUTHORIZED", { message: "Invalid or expired verification code." });
         }
 
         // OTP verification succeeded, clean code from store
-        if (!isAyaanBypass) {
-          (global as any).otpStore?.delete(lowerEmail);
-        }
+        getOtpStore().delete(lowerEmail);
 
         // 2. Retrieve or create User profile
         let user = await DB.findUserByEmail(lowerEmail);
@@ -130,8 +128,13 @@ const credentialsPlugin = () => {
 };
 
 export const auth = betterAuth({
+  baseURL: config.betterAuthUrl,
   secret: BETTER_AUTH_SECRET,
   database: () => customDbAdapter,
+  trustedOrigins: [
+    "http://localhost:3000",
+    "http://localhost:8081",
+  ],
   socialProviders: {
     ...(config.googleClientId && config.googleClientSecret ? {
       google: {
@@ -156,8 +159,35 @@ export const auth = betterAuth({
 // Expose server authentication validation to routes (retains existing contract)
 export async function getSessionUser(): Promise<User | null> {
   try {
+    const requestHeaders = await headers();
+
+    // First, try Bearer token authentication (for mobile apps)
+    const authHeader = requestHeaders.get('authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+
+      // Validate token by finding the session
+      const session = await DB.findRecord('session', [{ field: 'token', value: token }]);
+      if (session && session.expiresAt && new Date(session.expiresAt) > new Date()) {
+        const user = await DB.findUserById(session.userId);
+        if (user) {
+          logger.debug('Auth:Me', `User authenticated via Bearer token: ${user.email}`);
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image || undefined,
+            createdAt: new Date(user.createdAt)
+          };
+        }
+      }
+      logger.warn('Auth:Me', 'Invalid or expired Bearer token');
+      return null;
+    }
+
+    // Fall back to cookie-based session auth (for web)
     const session = await auth.api.getSession({
-      headers: await headers()
+      headers: requestHeaders
     });
     if (!session || !session.user) return null;
 

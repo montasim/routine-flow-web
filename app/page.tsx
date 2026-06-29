@@ -16,11 +16,23 @@ import {
   LogOut,
   AlertTriangle,
   ChevronDown,
-  SwitchCamera
+  SwitchCamera,
+  Heart,
+  Activity,
+  Briefcase,
+  Brain,
+  DollarSign,
+  ChevronLeft,
+  Folder,
+  BarChart3,
+  Pencil,
+  Trash2,
+  ChevronsUpDown
 } from "lucide-react";
 import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
 import { DEFAULT_TIMEZONE, DEFAULT_REMINDER_MINUTES, TIMEZONES, SETTINGS_TIMEZONES, REMINDER_OPTIONS, CATEGORIES } from "@/lib/constant";
+import { ConfirmModal } from "@/components/shared/ConfirmModal";
 
 // ─── TYPES ───
 
@@ -100,7 +112,7 @@ interface ToastItem {
   duration?: number;
 }
 
-const ToastContext = React.createContext<(msg: string, opts?: { tone?: ToastTone; icon?: string; duration?: number }) => void>(() => {});
+const ToastContext = React.createContext<(msg: string, opts?: { tone?: ToastTone; icon?: string; duration?: number }) => void>(() => { });
 
 // ─── SVG BRAND MARK ───
 
@@ -293,10 +305,6 @@ function SignInPage({ onSignIn, onGoSignUp, googleLoginEnabled }: { onSignIn: ()
       if (data.success) {
         setStep("otp");
         setResendTimer(60);
-        if (data.devOtp) {
-          setOtp(data.devOtp);
-          toast(`[DEV MODE] OTP Generated: ${data.devOtp}`, { tone: "default", duration: 8000 });
-        }
       } else {
         setError(data.error || "Failed to send code.");
       }
@@ -344,19 +352,7 @@ function SignInPage({ onSignIn, onGoSignUp, googleLoginEnabled }: { onSignIn: ()
           callbackURL: window.location.origin
         });
       } else {
-        const { data, error } = await authClient.$fetch("/sign-in/credentials", {
-          method: "POST",
-          body: {
-            email: "ayaan@routineflow.app",
-            code: "123456"
-          }
-        });
-        if (!error) {
-          await fetch("/api/occurrences/generate", { method: "POST" });
-          onSignIn();
-        } else {
-          toast("Google login failed.", { tone: "warning" });
-        }
+        toast("Google login is not configured. Use email OTP.", { tone: "warning" });
       }
     } catch (e) {
       toast("Connection error.", { tone: "warning" });
@@ -526,7 +522,7 @@ function SignUpPage({ onSignUp, onGoSignIn, googleLoginEnabled }: { onSignUp: ()
     try {
       const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (systemTz) setTimezone(systemTz);
-    } catch (e) {}
+    } catch (e) { }
   }, []);
 
   useEffect(() => {
@@ -561,9 +557,6 @@ function SignUpPage({ onSignUp, onGoSignIn, googleLoginEnabled }: { onSignUp: ()
       if (data.success) {
         setStep("otp");
         setResendTimer(30);
-        if (data.devOtp) {
-          toast(`Developer mode: OTP code is ${data.devOtp}`, { tone: "signal" });
-        }
       } else {
         setError(data.error || "Failed to send OTP code.");
       }
@@ -610,19 +603,7 @@ function SignUpPage({ onSignUp, onGoSignIn, googleLoginEnabled }: { onSignUp: ()
           callbackURL: window.location.origin
         });
       } else {
-        const { data, error } = await authClient.$fetch("/sign-in/credentials", {
-          method: "POST",
-          body: {
-            email: "ayaan@routineflow.app",
-            code: "123456"
-          }
-        });
-        if (!error) {
-          await fetch("/api/occurrences/generate", { method: "POST" });
-          onSignUp();
-        } else {
-          toast("Google signup failed.", { tone: "warning" });
-        }
+        toast("Google signup is not configured. Use email OTP.", { tone: "warning" });
       }
     } catch (e) {
       toast("Connection error.", { tone: "warning" });
@@ -888,7 +869,7 @@ function DisciplineBreakdown({ score }: { score: number }) {
   function Factor({ label, weight, val }: { label: string; weight: string; val: number }) {
     return (
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ width: 130, fontSize: "var(--text-sm)", color: "var(--text-secondary)", flexShrink: 0 }}>{label}</span>
+        <span style={{ width: 120, fontSize: "var(--text-sm)", color: "var(--text-secondary)", flexShrink: 0 }}>{label}</span>
         <div style={{ flex: 1, height: 6, background: "var(--surface-sunken)", borderRadius: "var(--radius-pill)", overflow: "hidden" }}>
           <div style={{ width: (val * 100) + "%", height: "100%", background: "var(--interactive)", borderRadius: "var(--radius-pill)" }} />
         </div>
@@ -897,18 +878,18 @@ function DisciplineBreakdown({ score }: { score: number }) {
     );
   }
   return (
-    <div style={{ background: "var(--surface-card)", borderRadius: "var(--radius-lg)", padding: "var(--space-7)", boxShadow: "var(--ring-hairline)", width: "100%" }}>
-      <div style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-xl)", fontWeight: 600, marginBottom: 20 }}>Discipline score</div>
-      <div className="flex items-center gap-7 flex-col sm:flex-row sm:items-center">
-        <ProgressRing value={score} size={110} thickness={10} />
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
+    <Card padding="lg" style={{ display: "flex", flexDirection: "column", gap: 18, width: "100%" }}>
+      <div style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-xl)", fontWeight: 600 }}>Discipline score</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
+        <ProgressRing value={score} size={120} thickness={10} />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
           <Factor label="Completion rate" weight="40%" val={0.86} />
           <Factor label="Consistency" weight="30%" val={0.81} />
           <Factor label="Delay penalty" weight="20%" val={0.74} />
           <Factor label="Streak bonus" weight="10%" val={0.9} />
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -1152,6 +1133,138 @@ function LogsTable({ logs }: { logs: LogItem[] }) {
   );
 }
 
+// ─── SKELETON LOADERS ───
+
+function OverviewSkeleton() {
+  return (
+    <>
+      <div className="grid gap-2.5 sm:gap-4 mb-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map(i => <div key={i} className="skeleton-box" style={{ height: 104, width: "100%" }} />)}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 24 }}>
+        <div className="skeleton-box" style={{ height: 28, width: 200, marginBottom: 4 }} />
+        {[1, 2, 3].map(i => <div key={i} className="skeleton-box" style={{ height: 72, width: "100%" }} />)}
+      </div>
+    </>
+  );
+}
+
+function RoutinesSkeleton() {
+  return (
+    <>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+        <div className="skeleton-box" style={{ height: 28, width: 140 }} />
+        <div className="skeleton-box" style={{ height: 38, width: 120, borderRadius: "var(--radius-md)" }} />
+      </div>
+      <div className="table-wrap" style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)" }}>
+        <table style={{ width: "100%" }}>
+          <thead>
+            <tr>
+              {[1, 2, 3, 4, 5, 6, 7].map(i => <th key={i}><div className="skeleton-box" style={{ height: 14, width: "60%" }} /></th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {[1, 2, 3, 4, 5].map(i => (
+              <tr key={i}>
+                <td colSpan={7} style={{ padding: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", padding: "12px 24px", gap: 16 }}>
+                     <div className="skeleton-box" style={{ height: 20, flex: 1 }} />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
+function CategoriesSkeleton() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 8 }}>
+        <div className="skeleton-box" style={{ height: 38, width: 140, borderRadius: "var(--radius-md)" }} />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} style={{ background: 'var(--surface-card)', padding: 'var(--space-6)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--ring-hairline)', display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div className="skeleton-box" style={{ width: 48, height: 48, borderRadius: '50%', flexShrink: 0 }} />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+               <div className="skeleton-box" style={{ height: 20, width: "60%" }} />
+               <div className="skeleton-box" style={{ height: 14, width: "40%" }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StatisticsSkeleton() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="skeleton-box" style={{ width: "100%", height: 300 }} />
+      <div className="grid gap-2.5 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mt-2">
+         {[1, 2, 3, 4].map(i => <div key={i} className="skeleton-box" style={{ height: 104, width: "100%" }} />)}
+      </div>
+    </div>
+  );
+}
+
+function LogsSkeleton() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ display: 'flex', gap: 12 }}>
+         {[1, 2, 3, 4, 5].map(i => <div key={i} className="skeleton-box" style={{ height: 34, width: 80, borderRadius: "var(--radius-pill)" }} />)}
+      </div>
+      <div className="table-wrap" style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)" }}>
+        <table style={{ width: "100%" }}>
+          <thead>
+            <tr>
+              {[1, 2, 3, 4, 5, 6].map(i => <th key={i}><div className="skeleton-box" style={{ height: 14, width: "60%" }} /></th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {[1, 2, 3, 4, 5, 6, 7].map(i => (
+              <tr key={i}>
+                <td colSpan={6} style={{ padding: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", padding: "12px 24px", gap: 16 }}>
+                     <div className="skeleton-box" style={{ height: 20, flex: 1 }} />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function SettingsSkeleton() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 40, maxWidth: 640 }}>
+       {[1, 2, 3, 4].map(section => (
+         <div key={section} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div>
+               <div className="skeleton-box" style={{ height: 20, width: 150, marginBottom: 6 }} />
+               <div className="skeleton-box" style={{ height: 14, width: 250 }} />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+               {[1, 2].map(field => (
+                  <div key={field}>
+                     <div className="skeleton-box" style={{ height: 12, width: 80, marginBottom: 8 }} />
+                     <div className="skeleton-box" style={{ height: 42, width: "100%" }} />
+                  </div>
+               ))}
+            </div>
+         </div>
+       ))}
+    </div>
+  );
+}
+
 // KPI Metric Tile
 function MetricTile({ label, value, unit, delta, deltaDirection = "up", tone = "default" }: any) {
   const valueColor = (({
@@ -1182,37 +1295,6 @@ function MetricTile({ label, value, unit, delta, deltaDirection = "up", tone = "
   );
 }
 
-// Confirmation Dialog Modal
-function ConfirmModal({ config, onConfirm, onCancel }: { config: any; onConfirm: () => void; onCancel: () => void }) {
-  const tone = config.confirmTone || "danger";
-  const confirmStyle = (({
-    danger: { bg: "var(--missed-600)", hover: "var(--missed-500)", fg: "#fff" },
-    primary: { bg: "var(--interactive)", hover: "var(--interactive-hover)", fg: "#fff" }
-  } as Record<string, { bg: string; hover: string; fg: string }>)[tone]) || { bg: "var(--missed-600)", hover: "var(--missed-500)", fg: "#fff" };
-
-  return (
-    <div onClick={(e) => e.target === e.currentTarget && onCancel()} style={{ position: "fixed", inset: 0, zIndex: 500, background: "rgba(22,24,29,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-      <div style={{ background: "var(--surface-card)", borderRadius: "var(--radius-xl)", width: "100%", maxWidth: 400, boxShadow: "var(--shadow-pop)", animation: "modalIn 180ms var(--ease-out) both", overflow: "hidden" }}>
-        <div style={{ padding: "28px 28px 0", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 14 }}>
-          <div style={{ width: 52, height: 52, borderRadius: "var(--radius-lg)", background: tone === "danger" ? "var(--missed-100)" : "var(--signal-50)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ color: tone === "danger" ? "var(--missed-600)" : "var(--interactive)", display: "inline-flex" }}>
-              <AlertTriangle size={24} />
-            </span>
-          </div>
-          <div>
-            <div style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-xl)", fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 6 }}>{config.title}</div>
-            <div style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)", lineHeight: 1.55 }}>{config.body}</div>
-          </div>
-        </div>
-        <div style={{ padding: "24px 28px 28px", display: "flex", gap: 10 }}>
-          <button onClick={onCancel} className="hover:bg-[var(--surface-sunken)]" style={{ flex: 1, padding: "10px 16px", borderRadius: "var(--radius-md)", border: "1.5px solid var(--border-default)", background: "var(--surface-card)", cursor: "pointer", fontFamily: "var(--font-text)", fontSize: "var(--text-md)", fontWeight: 500, color: "var(--text-primary)", transition: "background var(--duration-fast) var(--ease-standard)" }}>{config.cancelLabel || "Cancel"}</button>
-          <button onClick={onConfirm} className="hover:opacity-90" style={{ flex: 1, padding: "10px 16px", borderRadius: "var(--radius-md)", border: "none", background: confirmStyle.bg, cursor: "pointer", fontFamily: "var(--font-text)", fontSize: "var(--text-md)", fontWeight: 600, color: confirmStyle.fg, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, transition: "background var(--duration-fast) var(--ease-standard)" }}>{config.confirmLabel || "Confirm"}</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // Profile Dropdown Menu in Topbar
 function ProfileMenu({ user, onGoSettings, onRequestSignOut }: any) {
   const [open, setOpen] = useState(false);
@@ -1227,46 +1309,23 @@ function ProfileMenu({ user, onGoSettings, onRequestSignOut }: any) {
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  const initials = (user.name || "?")[0].toUpperCase();
-
   return (
     <div ref={ref} style={{ position: "relative" }}>
       <button
         onClick={() => setOpen(!open)}
         style={{
-          width: 36,
-          height: 36,
-          borderRadius: "var(--radius-pill)",
+          background: "none",
           border: "none",
+          padding: 0,
           cursor: "pointer",
-          background: "var(--signal-500)",
-          color: "#fff",
-          fontFamily: "var(--font-display)",
-          fontSize: 13,
-          fontWeight: 700,
-          letterSpacing: "0.01em",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          borderRadius: "var(--radius-pill)",
           boxShadow: open ? "0 0 0 3px var(--signal-100)" : "none",
           transition: "box-shadow var(--duration-fast) var(--ease-standard)",
-          flexShrink: 0
+          flexShrink: 0,
+          display: "inline-flex"
         }}
       >
-        {user.image ? (
-          <img
-            src={user.image}
-            alt={user.name}
-            style={{
-              width: "100%",
-              height: "100%",
-              borderRadius: "var(--radius-pill)",
-              objectFit: "cover"
-            }}
-          />
-        ) : (
-          initials
-        )}
+        <Avatar name={user.name} src={user.image} size={36} />
       </button>
 
       {open && (
@@ -1298,12 +1357,13 @@ function ProfileMenu({ user, onGoSettings, onRequestSignOut }: any) {
 
 // ─── NEW ROUTINE MODAL ───
 
-function NewRoutineModal({ onClose, onSave }: { onClose: () => void; onSave: () => void }) {
+function NewRoutineModal({ onClose, onSave, routine, onAddNewCategory }: { onClose: () => void; onSave: () => void; routine?: Routine; onAddNewCategory?: () => void }) {
   const toast = React.useContext(ToastContext);
-  const [title, setTitle] = useState("");
-  const [time, setTime] = useState("08:00");
-  const [category, setCategory] = useState("Health");
-  const [recurrence, setRecurrence] = useState("Daily");
+  const [title, setTitle] = useState(routine?.title || "");
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [time, setTime] = useState(routine?.time || "08:00");
+  const [category, setCategory] = useState(routine?.category || "Health");
+  const [recurrence, setRecurrence] = useState(routine?.recurrence?.toLowerCase() === "weekly" ? "Weekly" : "Daily");
   const [days, setDays] = useState<number[]>([1, 2, 3, 4, 5]); // Mon–Fri default
   const [reminder, setReminder] = useState("15");
   const [useCustomReminder, setUseCustomReminder] = useState(false);
@@ -1324,8 +1384,10 @@ function NewRoutineModal({ onClose, onSave }: { onClose: () => void; onSave: () 
     setError("");
 
     try {
-      const res = await fetch("/api/routines", {
-        method: "POST",
+      const isEdit = !!routine;
+      const url = isEdit ? `/api/routines/${routine.id}` : "/api/routines";
+      const res = await fetch(url, {
+        method: isEdit ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title,
@@ -1355,7 +1417,7 @@ function NewRoutineModal({ onClose, onSave }: { onClose: () => void; onSave: () 
       <div style={{ background: "var(--surface-card)", borderRadius: "var(--radius-xl)", width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto", boxShadow: "var(--shadow-pop)", animation: "modalIn 180ms var(--ease-out) both" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "22px 24px 0" }}>
           <div>
-            <div style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-2xl)", fontWeight: 700, letterSpacing: "-0.02em" }}>New routine</div>
+            <div style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-2xl)", fontWeight: 700, letterSpacing: "-0.02em" }}>{routine ? "Edit routine" : "New routine"}</div>
             <div style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)", marginTop: 3 }}>Occurrences generate nightly.</div>
           </div>
           <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: "var(--radius-md)", border: "none", background: "var(--surface-sunken)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}>
@@ -1378,18 +1440,9 @@ function NewRoutineModal({ onClose, onSave }: { onClose: () => void; onSave: () 
             />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            <div>
-              <label style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-caps)", color: "var(--text-muted)", marginBottom: 6 }}>Scheduled time</label>
-              <input
-                type="time"
-                value={time}
-                onChange={e => setTime(e.target.value)}
-                style={{ width: "100%", height: 42, padding: "0 12px", background: "var(--surface-card)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-md)", fontFamily: "var(--font-text)", fontSize: "var(--text-md)", color: "var(--text-primary)", outline: "none" }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-caps)", color: "var(--text-muted)", marginBottom: 6 }}>Category</label>
+          <div>
+            <label style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-caps)", color: "var(--text-muted)", marginBottom: 6 }}>Category</label>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <select
                 value={category}
                 onChange={e => setCategory(e.target.value)}
@@ -1399,6 +1452,39 @@ function NewRoutineModal({ onClose, onSave }: { onClose: () => void; onSave: () 
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
+              {onAddNewCategory && (
+                <button
+                  type="button"
+                  onClick={onAddNewCategory}
+                  style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "none", color: "var(--interactive)", fontSize: "var(--text-sm)", fontWeight: 500, cursor: "pointer", padding: "4px 0", alignSelf: "flex-start" }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, borderRadius: "50%", border: "1.5px solid var(--interactive)" }}>
+                    <Plus size={12} strokeWidth={3} />
+                  </span>
+                  Add custom category...
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <div>
+              <label style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-caps)", color: "var(--text-muted)", marginBottom: 6 }}>Start Date</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={e => setStartDate(e.target.value)}
+                style={{ width: "100%", height: 42, padding: "0 12px", background: "var(--surface-card)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-md)", fontFamily: "var(--font-text)", fontSize: "var(--text-md)", color: "var(--text-primary)", outline: "none" }}
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-caps)", color: "var(--text-muted)", marginBottom: 6 }}>Scheduled time</label>
+              <input
+                type="time"
+                value={time}
+                onChange={e => setTime(e.target.value)}
+                style={{ width: "100%", height: 42, padding: "0 12px", background: "var(--surface-card)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-md)", fontFamily: "var(--font-text)", fontSize: "var(--text-md)", color: "var(--text-primary)", outline: "none" }}
+              />
             </div>
           </div>
 
@@ -1522,9 +1608,757 @@ function NewRoutineModal({ onClose, onSave }: { onClose: () => void; onSave: () 
                 transition: "opacity var(--duration-fast) var(--ease-standard)"
               }}
             >
-              {saving ? "Saving…" : "Save routine"}
+              {saving ? "Saving..." : (routine ? "Save Routine" : "Create Routine")}
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── SETTINGS FORM UTILS & COMPONENTS ───
+
+function initials(name = "") {
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || "?";
+}
+
+function Avatar({
+  name = "",
+  src,
+  size = 36,
+  style = {}
+}: {
+  name?: string;
+  src?: string;
+  size?: number;
+  style?: React.CSSProperties;
+}) {
+  const PALETTE = ["var(--signal-500)", "var(--completed-600)", "var(--skipped-600)", "var(--ink-700)", "var(--missed-500)"];
+  const color = PALETTE[(name.charCodeAt(0) || 0) % PALETTE.length];
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: size,
+        height: size,
+        flex: "none",
+        borderRadius: "var(--radius-pill)",
+        overflow: "hidden",
+        background: src ? "var(--surface-sunken)" : color,
+        color: "#fff",
+        fontFamily: "var(--font-display)",
+        fontSize: Math.round(size * 0.4),
+        fontWeight: 600,
+        letterSpacing: "0.01em",
+        userSelect: "none",
+        ...style
+      }}
+    >
+      {src ? (
+        <img
+          src={src}
+          alt={name}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover"
+          }}
+        />
+      ) : (
+        initials(name)
+      )}
+    </span>
+  );
+}
+
+function Card({
+  children,
+  padding = "md",
+  style = {}
+}: {
+  children: React.ReactNode;
+  padding?: "none" | "sm" | "md" | "lg";
+  style?: React.CSSProperties;
+}) {
+  const pads = {
+    none: 0,
+    sm: "var(--space-5)",
+    md: "var(--space-6)",
+    lg: "var(--space-8)"
+  };
+  return (
+    <div
+      style={{
+        background: "var(--surface-card)",
+        borderRadius: "var(--radius-lg)",
+        padding: pads[padding],
+        boxShadow: "var(--ring-hairline)",
+        ...style
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Button({
+  children,
+  variant = "primary",
+  size = "md",
+  iconLeft = null,
+  iconRight = null,
+  fullWidth = false,
+  disabled = false,
+  type = "button",
+  onClick,
+  style = {},
+  ...rest
+}: {
+  children?: React.ReactNode;
+  variant?: "primary" | "secondary" | "ghost" | "danger";
+  size?: "sm" | "md" | "lg";
+  iconLeft?: React.ReactNode;
+  iconRight?: React.ReactNode;
+  fullWidth?: boolean;
+  disabled?: boolean;
+  type?: "button" | "submit" | "reset";
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  style?: React.CSSProperties;
+  [key: string]: any;
+}) {
+  const sizes = {
+    sm: { height: 32, padding: "0 12px", font: "var(--text-sm)", radius: "var(--radius-sm)", gap: 6 },
+    md: { height: 40, padding: "0 16px", font: "var(--text-md)", radius: "var(--radius-md)", gap: 8 },
+    lg: { height: 48, padding: "0 22px", font: "var(--text-lg)", radius: "var(--radius-md)", gap: 8 }
+  };
+  const s = sizes[size] || sizes.md;
+  const variants = {
+    primary: { background: "var(--interactive)", color: "#fff", border: "1px solid transparent" },
+    secondary: { background: "var(--surface-card)", color: "var(--text-primary)", border: "1px solid var(--border-default)" },
+    ghost: { background: "transparent", color: "var(--text-primary)", border: "1px solid transparent" },
+    danger: { background: "var(--status-missed)", color: "#fff", border: "1px solid transparent" }
+  };
+  const v = variants[variant] || variants.primary;
+  const hoverBg = {
+    primary: "var(--interactive-hover)",
+    secondary: "var(--surface-sunken)",
+    ghost: "var(--surface-sunken)",
+    danger: "var(--missed-600)"
+  };
+
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <button
+      type={type}
+      disabled={disabled}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: s.gap,
+        height: s.height,
+        padding: s.padding,
+        width: fullWidth ? "100%" : "auto",
+        fontFamily: "var(--font-text)",
+        fontSize: s.font,
+        fontWeight: 600,
+        letterSpacing: "0.01em",
+        lineHeight: 1,
+        borderRadius: s.radius,
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.45 : 1,
+        boxShadow: variant === "primary" || variant === "danger" ? "var(--shadow-xs)" : "none",
+        transition: "transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard)",
+        WebkitTapHighlightColor: "transparent",
+        ...v,
+        ...(hovered && !disabled ? { background: hoverBg[variant] } : {}),
+        ...style
+      }}
+      {...rest}
+    >
+      {iconLeft && <span style={{ display: "inline-flex" }}>{iconLeft}</span>}
+      {children}
+      {iconRight && <span style={{ display: "inline-flex" }}>{iconRight}</span>}
+    </button>
+  );
+}
+
+function Tabs({
+  items = [],
+  value,
+  onChange,
+  style = {}
+}: {
+  items?: { value: string; label: string; count?: number }[];
+  value: string;
+  onChange?: (val: string) => void;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div
+      role="tablist"
+      style={{
+        display: "flex",
+        gap: "var(--space-6)",
+        borderBottom: "1px solid var(--border-subtle)",
+        ...style
+      }}
+    >
+      {items.map(it => {
+        const active = it.value === value;
+        const [hovered, setHovered] = useState(false);
+        return (
+          <button
+            key={it.value}
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange && onChange(it.value)}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            style={{
+              position: "relative",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "0 0 12px",
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              fontFamily: "var(--font-text)",
+              fontSize: "var(--text-md)",
+              fontWeight: active ? 600 : 500,
+              color: active ? "var(--text-primary)" : hovered ? "var(--text-secondary)" : "var(--text-muted)",
+              transition: "color var(--duration-fast) var(--ease-standard)"
+            }}
+          >
+            {it.label}
+            {it.count != null && (
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "var(--text-2xs)",
+                  color: active ? "var(--interactive)" : "var(--text-faint)"
+                }}
+              >
+                {it.count}
+              </span>
+            )}
+            <span
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: -1,
+                height: 2,
+                borderRadius: "var(--radius-pill)",
+                background: active ? "var(--interactive)" : "transparent",
+                transition: "background var(--duration-fast) var(--ease-standard)"
+              }}
+            />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function Switch({
+  checked = false,
+  disabled = false,
+  size = "md",
+  onChange,
+  ariaLabel,
+  style = {}
+}: {
+  checked?: boolean;
+  disabled?: boolean;
+  size?: "sm" | "md";
+  onChange?: (val: boolean) => void;
+  ariaLabel?: string;
+  style?: React.CSSProperties;
+}) {
+  const dims = size === "sm" ? {
+    w: 36,
+    h: 20,
+    k: 14
+  } : {
+    w: 44,
+    h: 26,
+    k: 20
+  };
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={ariaLabel}
+      disabled={disabled}
+      onClick={() => !disabled && onChange && onChange(!checked)}
+      style={{
+        position: "relative",
+        width: dims.w,
+        height: dims.h,
+        flex: "none",
+        padding: 0,
+        border: "none",
+        borderRadius: "var(--radius-pill)",
+        background: checked ? "var(--interactive)" : "var(--paper-300)",
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.5 : 1,
+        transition: "background var(--duration-base) var(--ease-standard)",
+        WebkitTapHighlightColor: "transparent",
+        ...style
+      }}
+    >
+      <span
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: checked ? dims.w - dims.k - 3 : 3,
+          width: dims.k,
+          height: dims.k,
+          transform: "translateY(-50%)",
+          background: "#fff",
+          borderRadius: "var(--radius-pill)",
+          boxShadow: "var(--shadow-sm)",
+          transition: "left var(--duration-base) var(--ease-standard)"
+        }}
+      />
+    </button>
+  );
+}
+
+function Input({
+  label,
+  value,
+  defaultValue,
+  placeholder,
+  type = "text",
+  leading = null,
+  trailing = null,
+  hint,
+  error,
+  disabled = false,
+  fullWidth = true,
+  onChange,
+  style = {},
+  ...rest
+}: {
+  label?: string;
+  value?: string;
+  defaultValue?: string;
+  placeholder?: string;
+  type?: string;
+  leading?: React.ReactNode;
+  trailing?: React.ReactNode;
+  hint?: string;
+  error?: string;
+  disabled?: boolean;
+  fullWidth?: boolean;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  style?: React.CSSProperties;
+  [key: string]: any;
+}) {
+  const [focused, setFocused] = useState(false);
+  const borderColor = error ? "var(--status-missed)" : focused ? "var(--interactive)" : "var(--border-default)";
+  return (
+    <label
+      style={{
+        display: "block",
+        width: fullWidth ? "100%" : "auto",
+        ...style
+      }}
+    >
+      {label && (
+        <span
+          style={{
+            display: "block",
+            fontFamily: "var(--font-text)",
+            fontSize: "var(--text-sm)",
+            fontWeight: 500,
+            color: "var(--text-secondary)",
+            marginBottom: "var(--space-3)"
+          }}
+        >
+          {label}
+        </span>
+      )}
+      <span
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "var(--space-3)",
+          height: 42,
+          padding: "0 12px",
+          background: disabled ? "var(--surface-sunken)" : "var(--surface-card)",
+          border: `1px solid ${borderColor}`,
+          borderRadius: "var(--radius-md)",
+          boxShadow: focused ? "var(--ring-focus)" : "none",
+          transition: "border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard)"
+        }}
+      >
+        {leading && (
+          <span
+            style={{
+              display: "inline-flex",
+              color: "var(--text-muted)"
+            }}
+          >
+            {leading}
+          </span>
+        )}
+        <input
+          type={type}
+          value={value}
+          defaultValue={defaultValue}
+          placeholder={placeholder}
+          disabled={disabled}
+          onChange={onChange}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            border: "none",
+            outline: "none",
+            background: "transparent",
+            fontFamily: "var(--font-text)",
+            fontSize: "var(--text-md)",
+            color: "var(--text-primary)"
+          }}
+          {...rest}
+        />
+        {trailing && (
+          <span
+            style={{
+              display: "inline-flex",
+              color: "var(--text-muted)"
+            }}
+          >
+            {trailing}
+          </span>
+        )}
+      </span>
+      {(hint || error) && (
+        <span
+          style={{
+            display: "block",
+            fontFamily: "var(--font-text)",
+            fontSize: "var(--text-xs)",
+            color: error ? "var(--status-missed)" : "var(--text-muted)",
+            marginTop: "var(--space-2)"
+          }}
+        >
+          {error || hint}
+        </span>
+      )}
+    </label>
+  );
+}
+
+function Select({
+  label,
+  value,
+  defaultValue,
+  options = [],
+  disabled = false,
+  fullWidth = true,
+  onChange,
+  style = {},
+  ...rest
+}: {
+  label?: string;
+  value?: string;
+  defaultValue?: string;
+  options?: (string | { value: string; label: string })[];
+  disabled?: boolean;
+  fullWidth?: boolean;
+  onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  style?: React.CSSProperties;
+  [key: string]: any;
+}) {
+  const [focused, setFocused] = useState(false);
+  const opts = options.map(o => typeof o === "string" ? { value: o, label: o } : o);
+  return (
+    <label
+      style={{
+        display: "block",
+        width: fullWidth ? "100%" : "auto",
+        ...style
+      }}
+    >
+      {label && (
+        <span
+          style={{
+            display: "block",
+            fontFamily: "var(--font-text)",
+            fontSize: "var(--text-sm)",
+            fontWeight: 500,
+            color: "var(--text-secondary)",
+            marginBottom: "var(--space-3)"
+          }}
+        >
+          {label}
+        </span>
+      )}
+      <span
+        style={{
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          height: 42,
+          background: disabled ? "var(--surface-sunken)" : "var(--surface-card)",
+          border: `1px solid ${focused ? "var(--interactive)" : "var(--border-default)"}`,
+          borderRadius: "var(--radius-md)",
+          boxShadow: focused ? "var(--ring-focus)" : "none",
+          transition: "border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard)"
+        }}
+      >
+        <select
+          value={value}
+          defaultValue={defaultValue}
+          disabled={disabled}
+          onChange={onChange}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={{
+            appearance: "none",
+            WebkitAppearance: "none",
+            flex: 1,
+            height: "100%",
+            padding: "0 36px 0 12px",
+            border: "none",
+            outline: "none",
+            background: "transparent",
+            fontFamily: "var(--font-text)",
+            fontSize: "var(--text-md)",
+            color: "var(--text-primary)",
+            cursor: disabled ? "not-allowed" : "pointer"
+          }}
+          {...rest}
+        >
+          {opts.map(o => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          style={{
+            position: "absolute",
+            right: 12,
+            pointerEvents: "none",
+            color: "var(--text-muted)"
+          }}
+        >
+          <path
+            d="M6 9l6 6 6-6"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+    </label>
+  );
+}
+
+function Row({
+  label,
+  sub,
+  control,
+  last = false
+}: {
+  label: string;
+  sub?: string;
+  control: React.ReactNode;
+  last?: boolean;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 0", borderBottom: last ? "none" : "1px solid var(--border-subtle)", flexWrap: "wrap" }}>
+      <div style={{ flex: 1, minWidth: 120 }}>
+        <div style={{ fontSize: "var(--text-md)", fontWeight: 500 }}>{label}</div>
+        {sub && <div style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginTop: 2 }}>{sub}</div>}
+      </div>
+      <div style={{ flexShrink: 0 }}>{control}</div>
+    </div>
+  );
+}
+
+// ─── CATEGORIES CHILD COMPONENTS ───
+
+export interface CategoryItem {
+  name: string;
+  icon: string;
+  routines: number;
+  rate: string;
+  top: string;
+}
+
+function getIconComponent(name: string, size = 24) {
+  switch (name) {
+    case 'heart': return <Heart size={size} />;
+    case 'activity': return <Activity size={size} />;
+    case 'briefcase': return <Briefcase size={size} />;
+    case 'brain': return <Brain size={size} />;
+    case 'dollar-sign': return <DollarSign size={size} />;
+    default: return <Activity size={size} />;
+  }
+}
+
+function CategoriesView({ onBack, onAddNew, onSelectCategory }: { onBack: () => void; onAddNew: () => void; onSelectCategory: (c: CategoryItem) => void }) {
+  const toast = React.useContext(ToastContext);
+  const [confirmDelete, setConfirmDelete] = useState<CategoryItem | null>(null);
+  const [categories, setCategories] = useState<CategoryItem[]>([
+    { name: 'Health', icon: 'heart', routines: 2, rate: '85%', top: 'Morning Walk' },
+    { name: 'Fitness', icon: 'activity', routines: 3, rate: '92%', top: 'Morning Gym' },
+    { name: 'Work', icon: 'briefcase', routines: 5, rate: '74%', top: 'Deep work block' },
+    { name: 'Mind', icon: 'brain', routines: 2, rate: '61%', top: 'Language practice' },
+  ]);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 8 }}>
+        <button
+          onClick={onAddNew}
+          className="hover:bg-[var(--interactive-hover)] active:scale-[0.97] transition-all flex items-center gap-1 cursor-pointer"
+          style={{ height: 38, background: "var(--interactive)", color: "#fff", padding: "0 14px", borderRadius: "var(--radius-md)", fontWeight: 600, border: "none", fontSize: "var(--text-sm)" }}
+        >
+          <Plus size={16} /> New Category
+        </button>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+        {categories.map(c => (
+          <div key={c.name} onClick={() => onSelectCategory(c)} className="group hover:scale-[1.01] transition-transform cursor-pointer relative" style={{ background: 'var(--surface-card)', padding: 'var(--space-6)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--ring-hairline)', display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--surface-sunken)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--interactive)' }}>
+              {getIconComponent(c.icon, 24)}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: 'var(--text-lg)', color: 'var(--text-primary)' }}>{c.name}</div>
+              <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>{c.routines} routines · Top: {c.top}</div>
+            </div>
+            <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddNew(); 
+                  toast(`Editing category "${c.name}"`, { tone: 'default' });
+                }} 
+                className="hover:text-[var(--interactive)] text-[var(--text-muted)] transition-colors p-1 bg-transparent border-none cursor-pointer flex items-center justify-center" 
+                title="Edit category"
+              >
+                <Pencil size={18} />
+              </button>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setConfirmDelete(c);
+                }} 
+                className="hover:text-[var(--missed-600)] text-[var(--text-muted)] transition-colors p-1 bg-transparent border-none cursor-pointer flex items-center justify-center" 
+                title="Delete category"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      {confirmDelete && (
+        <ConfirmModal
+          config={{ icon: "trash", title: "Delete Category?", body: `Are you sure you want to delete the category "${confirmDelete.name}"? All routines inside it will be uncategorized.`, confirmLabel: "Delete", confirmTone: "danger" }}
+          onConfirm={() => {
+             setCategories(prev => prev.filter(x => x.name !== confirmDelete.name));
+             toast("Category deleted.", { tone: 'default' });
+             setConfirmDelete(null);
+          }}
+          onCancel={() => setConfirmDelete(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function AddCategoryModal({ onClose }: { onClose: () => void }) {
+  const [name, setName] = useState("");
+  const [icon, setIcon] = useState("dollar-sign");
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(22,24,29,0.5)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background: 'var(--surface-card)', padding: 'var(--space-8)', borderRadius: 'var(--radius-xl)', width: 'min(400px, 90vw)', boxShadow: 'var(--shadow-pop)', animation: 'modalIn 180ms var(--ease-out) both' }}>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-xl)', fontWeight: 600, marginBottom: 20 }}>New Category</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-caps)', color: 'var(--text-muted)', marginBottom: 6 }}>Category Name</div>
+            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Finances" style={{ width: "100%", height: 42, padding: "0 12px", background: "var(--surface-card)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-md)", fontFamily: "var(--font-text)", fontSize: "var(--text-md)", color: "var(--text-primary)", outline: "none" }} />
+          </div>
+          <div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-caps)', color: 'var(--text-muted)', marginBottom: 6 }}>Icon</div>
+            <select value={icon} onChange={e => setIcon(e.target.value)} style={{ width: "100%", height: 42, padding: "0 12px", background: "var(--surface-card)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-md)", fontFamily: "var(--font-text)", fontSize: "var(--text-md)", color: "var(--text-primary)", outline: "none" }}>
+              <option value="dollar-sign">Dollar Sign</option>
+              <option value="briefcase">Briefcase</option>
+              <option value="heart">Heart</option>
+              <option value="brain">Brain</option>
+              <option value="activity">Activity</option>
+            </select>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+          <button onClick={onClose} className="hover:bg-[var(--surface-sunken)]" style={{ flex: 1, height: 40, border: "1px solid var(--border-default)", background: "var(--surface-card)", borderRadius: "var(--radius-md)", fontWeight: 600, fontSize: "var(--text-md)", cursor: "pointer", color: "var(--text-primary)", transition: "background var(--duration-fast) var(--ease-standard)" }}>Cancel</button>
+          <button onClick={onClose} className="hover:opacity-90" style={{ flex: 1, height: 40, background: "var(--interactive)", color: "#fff", border: "none", borderRadius: "var(--radius-md)", fontWeight: 600, fontSize: "var(--text-md)", cursor: "pointer", boxShadow: "var(--shadow-xs)" }}>Save Category</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CategoryDetailView({ category, onBack, routines }: { category: CategoryItem; onBack: () => void; routines: Routine[] }) {
+  const catRoutines = routines.filter(r => r.category === category.name);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 8 }}>
+        <button onClick={() => {
+          if (window.confirm("Are you sure you want to delete this category?")) {
+            onBack();
+          }
+        }} style={{ background: 'none', border: 'none', color: 'var(--missed-600)', cursor: 'pointer' }}>
+          <Trash2 size={20} />
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--surface-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--interactive)', boxShadow: 'var(--shadow-sm)' }}>
+          {getIconComponent(category.icon, 32)}
+        </div>
+        <div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-2xl)', fontWeight: 700 }}>{category.name}</div>
+          <div style={{ fontSize: 'var(--text-md)', color: 'var(--text-secondary)' }}>Category statistics</div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
+        <MetricTile label="Completion Rate" value={category.rate} tone="completed" />
+        <MetricTile label="Best Streak" value="12" unit="Days" />
+        <MetricTile label="Routines" value={catRoutines.length.toString()} />
+        <MetricTile label="Time Spent" value="14h" unit="20m" />
+      </div>
+
+      <div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-2xs)', textTransform: 'uppercase', letterSpacing: 'var(--tracking-caps)', color: 'var(--text-muted)', marginBottom: 16 }}>Routines in Category</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {catRoutines.map(r => (
+            <OccurrenceRow key={r.id} id={r.id} time={r.time} title={r.title} category={r.category} status={r.active ? "Pending" : "Completed"} onComplete={() => { }} onSkip={() => { }} />
+          ))}
+          {catRoutines.length === 0 && <div style={{ color: 'var(--text-muted)' }}>No routines found in this category.</div>}
         </div>
       </div>
     </div>
@@ -1557,15 +2391,19 @@ function Dashboard({ onSignOut, user, initialSettings }: { onSignOut: () => void
   const [useGlobal, setUseGlobal] = useState(settings.notificationPreferences.useGlobal);
   const [notif, setNotif] = useState(settings.notificationPreferences.notifEnabled);
   const [skipBreaks, setSkipBreaks] = useState(settings.notificationPreferences.skipBreaksStreak);
-
   // Modal confirmations
   const [confirmSignOut, setConfirmSignOut] = useState(false);
+  const [confirmDeleteRoutine, setConfirmDeleteRoutine] = useState<Routine | null>(null);
+  const [confirmEditRoutine, setConfirmEditRoutine] = useState<Routine | null>(null);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryItem | null>(null);
   const [showNewRoutine, setShowNewRoutine] = useState(false);
+  const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
 
   const fetchAllData = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Fetch analytics (which returns routines list enriched too)
       const aRes = await fetch("/api/analytics");
       const aData = await aRes.json();
@@ -1628,22 +2466,38 @@ function Dashboard({ onSignOut, user, initialSettings }: { onSignOut: () => void
     }
   }
 
-  async function handleSaveSettings() {
+  async function handleSaveSettings(updates: {
+    displayName?: string;
+    timezone?: string;
+    defaultReminderMinutes?: number;
+    notificationPreferences?: {
+      notifEnabled: boolean;
+      useGlobal: boolean;
+      skipBreaksStreak: boolean;
+    };
+  }) {
     try {
-      const res = await fetch("/api/auth/me", { // We mock settings update on profile me or create a setting update endpoint
-        // Wait, let's create a dedicated settings put endpoint or handle it in settings save.
-        // Actually, we can POST to api/auth/otp/verify or settings. Let's send a settings save request to api/cron or similar, 
-        // but wait! We can implement it in settings.
+      const res = await fetch("/api/auth/me", {
+        cache: "no-store",
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates)
       });
-      toast("Settings updated.", { tone: "signal" });
-    } catch (e) {}
+      if (res.ok) {
+        toast("Settings updated.", { tone: "signal" });
+      } else {
+        toast("Failed to update settings.", { tone: "warning" });
+      }
+    } catch (e) {
+      toast("Connection error saving settings.", { tone: "warning" });
+    }
   }
 
   async function triggerSignOut() {
     try {
       await authClient.signOut();
       onSignOut();
-    } catch (e) {}
+    } catch (e) { }
   }
 
   function handleTriggerExportXlsx() {
@@ -1658,21 +2512,17 @@ function Dashboard({ onSignOut, user, initialSettings }: { onSignOut: () => void
     setConfirmExportCsv(false);
   }
 
-  const pageTitle = { overview: "Overview", routines: "Routines", logs: "Logs", exports: "Exports", settings: "Settings" }[nav];
+  const pageTitle: any = { overview: "Overview", categories: "Categories", statistics: "Statistics", routines: "Routines", logs: "Logs", exports: "Exports", settings: "Settings" }[nav];
   const NAV_ITEMS = [
     { id: "overview", label: "Overview", icon: <LayoutDashboard size={18} /> },
+    { id: "categories", label: "Categories", icon: <Folder size={18} /> },
+    { id: "statistics", label: "Statistics", icon: <BarChart3 size={18} /> },
     { id: "routines", label: "Routines", icon: <Repeat size={18} /> },
     { id: "logs", label: "Logs", icon: <List size={18} /> },
     { id: "exports", label: "Exports", icon: <Download size={18} /> }
   ];
 
-  if (loading && !analytics) {
-    return (
-      <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface-app)" }}>
-        <div style={{ fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>CONNECTING TO ROUTINEFLOW DEVICE...</div>
-      </div>
-    );
-  }
+
 
   const D = analytics || {
     metrics: {
@@ -1690,34 +2540,34 @@ function Dashboard({ onSignOut, user, initialSettings }: { onSignOut: () => void
 
   return (
     <>
-      <div className="flex h-screen w-screen max-w-full overflow-hidden bg-[var(--surface-app)]">
+      <div className="app">
         {/* Sidebar */}
-        <aside className="w-[236px] flex-none bg-[var(--surface-card)] border-r border-[var(--border-subtle)] p-[22px_16px] flex flex-col gap-1 h-screen overflow-y-auto hidden lg:flex">
-          <div className="flex items-center gap-2.5 p-[4px_8px_22px]">
+        <aside className="sidebar">
+          <div className="brand">
             <div style={{ width: 30, height: 30, flexShrink: 0, overflow: "hidden", borderRadius: 7, lineHeight: 0 }}>
               {MARK_SVG}
             </div>
-            <span className="font-display text-[19px] font-bold tracking-tight">Routine<span className="text-[var(--interactive)]">Flow</span></span>
+            <span className="brand-name">Routine<span className="brand-flow">Flow</span></span>
           </div>
           {NAV_ITEMS.map(n => (
-            <button key={n.id} className={`flex items-center gap-[11px] p-[9px_11px] rounded-[var(--radius-md)] cursor-pointer text-[var(--text-md)] font-medium border-none bg-none w-full text-left transition-all hover:bg-[var(--surface-sunken)] ${nav === n.id ? "bg-[var(--signal-50)] text-[var(--signal-700)] font-semibold" : "text-[var(--text-secondary)]"}`} onClick={() => setNav(n.id)}>
+            <button key={n.id} className={'nav-btn' + (nav === n.id ? ' active' : '')} onClick={() => { setNav(n.id); if (n.id === 'categories') setSelectedCategory(null); }}>
               {n.icon}
               {n.label}
             </button>
           ))}
-          <div className="mt-auto">
-            <button className={`flex items-center gap-[11px] p-[9px_11px] rounded-[var(--radius-md)] cursor-pointer text-[var(--text-md)] font-medium border-none bg-none w-full text-left transition-all hover:bg-[var(--surface-sunken)] ${nav === "settings" ? "bg-[var(--signal-50)] text-[var(--signal-700)] font-semibold" : "text-[var(--text-secondary)]"}`} onClick={() => setNav("settings")}>
+          <div className="nav-foot">
+            <button className={'nav-btn' + (nav === 'settings' ? ' active' : '')} onClick={() => setNav("settings")}>
               <Settings size={18} />Settings
             </button>
           </div>
         </aside>
 
         {/* Main Workspace Area */}
-        <main className="flex-1 min-w-0 max-w-full flex flex-col overflow-y-auto lg:h-screen lg:overflow-hidden h-auto overflow-visible">
+        <main className="main-area">
           {/* Tablet Top Header Navigation */}
-          <div className="flex lg:hidden items-center gap-1 bg-[var(--surface-card)] border-b border-[var(--border-subtle)] px-3 overflow-x-auto scrollbar-none h-[42px] sm:h-12">
+          <div className="mobile-topnav">
             {[...NAV_ITEMS, { id: "settings", label: "Settings", icon: <Settings size={16} /> }].map(n => (
-              <button key={n.id} className={`flex items-center gap-1.5 px-3 py-2.5 border-b-2 bg-none cursor-pointer whitespace-nowrap text-[var(--text-sm)] font-medium font-text transition-all ${nav === n.id ? "text-[var(--interactive)] border-b-[var(--interactive)] font-semibold" : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-sunken)]"}`} onClick={() => setNav(n.id)}>
+              <button key={n.id} className={'mobile-topnav-btn' + (nav === n.id ? ' active' : '')} onClick={() => { setNav(n.id); if (n.id === 'categories') setSelectedCategory(null); }}>
                 {n.icon}
                 {n.label}
               </button>
@@ -1725,18 +2575,18 @@ function Dashboard({ onSignOut, user, initialSettings }: { onSignOut: () => void
           </div>
 
           {/* Sticky Topbar */}
-          <div className="flex items-center justify-between p-4 sm:p-5 lg:p-[20px_32px] border-b border-[var(--border-subtle)] bg-[var(--surface-app)] sticky top-0 z-10">
+          <div className="topbar">
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ width: 28, height: 28, flexShrink: 0, overflow: "hidden", borderRadius: 6, lineHeight: 0, display: "var(--brand-in-topbar, none)" }}>
                 {MARK_SVG}
               </div>
               <div>
                 <div style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-caps)", color: "var(--text-muted)" }}>RoutineFlow</div>
-                <div style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-2xl)", fontWeight: 700, letterSpacing: "-0.02em" }}>{pageTitle}</div>
+                <div className="topbar-title" style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-2xl)", fontWeight: 700, letterSpacing: "-0.02em" }}>{pageTitle}</div>
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-[var(--surface-sunken)] font-mono text-[var(--text-xs)] text-[var(--text-secondary)] hidden sm:inline-flex">
+              <span className="tzchip">
                 <Globe size={14} />
                 {settings.timezone}
               </span>
@@ -1747,7 +2597,7 @@ function Dashboard({ onSignOut, user, initialSettings }: { onSignOut: () => void
                   style={{ height: 38, background: "var(--interactive)", color: "#fff", padding: "0 14px", borderRadius: "var(--radius-md)", fontWeight: 600, border: "none", fontSize: "var(--text-sm)" }}
                 >
                   <Download size={14} />
-                  <span className="hidden sm:inline">Export .xlsx</span>
+                  <span className="export-btn-label">Export .xlsx</span>
                 </button>
               )}
               <ProfileMenu user={user} onGoSettings={() => setNav("settings")} onRequestSignOut={() => setConfirmSignOut(true)} />
@@ -1755,73 +2605,78 @@ function Dashboard({ onSignOut, user, initialSettings }: { onSignOut: () => void
           </div>
 
           {/* Content Pane */}
-          <div className="p-4 sm:p-5 lg:p-[28px_32px_48px] pb-[88px] sm:pb-[80px] lg:pb-[48px] w-full max-w-[1200px]">
+          <div className="content">
             {nav === "overview" && (
+              loading ? <OverviewSkeleton /> :
+              <>
+                <div className="grid gap-2.5 sm:gap-4 mb-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                  <MetricTile label="Completion rate" value={D.metrics.daily.completion} unit="%" />
+                  <MetricTile label="Missed" value={D.metrics.daily.missed} tone="missed" />
+                  <MetricTile label="Avg delay" value={D.metrics.daily.avgDelay} unit="min" tone="completed" />
+                  <MetricTile label="Best routine" value={D.metrics.daily.bestRoutine || "—"} />
+                </div>
+                {/* Occurrences List */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 24 }}>
+                  <div style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-xl)", fontWeight: 600, marginBottom: 4 }}>Today's occurrences</div>
+                  {occurrences.length === 0 ? (
+                    <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)", padding: "32px", textAlign: "center", color: "var(--text-muted)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" }}>
+                      NO OCCURRENCES SCHEDULED TODAY. NEXT OCCURRENCES GENERATE AT 23:00.
+                    </div>
+                  ) : (
+                    occurrences.map(o => {
+                      const r = routines.find(x => x.id === o.routineId);
+                      return (
+                        <OccurrenceRow
+                          key={o.id}
+                          id={o.id}
+                          time={o.scheduledTime}
+                          title={r ? r.title : "Unknown Routine"}
+                          category={r ? r.category : ""}
+                          status={o.status}
+                          delay={o.delay}
+                          onComplete={handleCompleteOccurrence}
+                          onSkip={handleSkipOccurrence}
+                        />
+                      );
+                    })
+                  )}
+                </div>
+              </>
+            )}
+
+            {nav === "statistics" && (
+              loading ? <StatisticsSkeleton /> :
               <>
                 <div style={{ marginBottom: 22 }}>
                   <div style={{ display: "flex", gap: "var(--space-6)", borderBottom: "1px solid var(--border-subtle)" }}>
-                    {[{ value: "day", label: "Daily" }, { value: "week", label: "Weekly" }, { value: "month", label: "Monthly" }, { value: "year", label: "Yearly" }].map(t => (
-                      <button
-                        key={t.value}
-                        onClick={() => setPeriod(t.value)}
-                        style={{
-                          position: "relative",
-                          padding: "0 0 12px",
-                          border: "none",
-                          background: "transparent",
-                          cursor: "pointer",
-                          fontFamily: "var(--font-text)",
-                          fontSize: "var(--text-md)",
-                          fontWeight: period === t.value ? 600 : 500,
-                          color: period === t.value ? "var(--text-primary)" : "var(--text-muted)",
-                          transition: "color var(--duration-fast) var(--ease-standard)"
-                        }}
-                      >
-                        {t.label}
-                        <span style={{ position: "absolute", left: 0, right: 0, bottom: -1, height: 2, borderRadius: "var(--radius-pill)", background: period === t.value ? "var(--interactive)" : "transparent" }} />
-                      </button>
-                    ))}
+                    {[{ value: "week", label: "Weekly" }, { value: "month", label: "Monthly" }, { value: "year", label: "Yearly" }].map(t => {
+                      const isActive = (period === "day" ? "week" : period) === t.value;
+                      return (
+                        <button
+                          key={t.value}
+                          onClick={() => setPeriod(t.value)}
+                          style={{
+                            position: "relative",
+                            padding: "0 0 12px",
+                            border: "none",
+                            background: "transparent",
+                            cursor: "pointer",
+                            fontFamily: "var(--font-text)",
+                            fontSize: "var(--text-md)",
+                            fontWeight: isActive ? 600 : 500,
+                            color: isActive ? "var(--text-primary)" : "var(--text-muted)",
+                            transition: "color var(--duration-fast) var(--ease-standard)"
+                          }}
+                        >
+                          {t.label}
+                          <span style={{ position: "absolute", left: 0, right: 0, bottom: -1, height: 2, borderRadius: "var(--radius-pill)", background: isActive ? "var(--interactive)" : "transparent" }} />
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {period === "day" && (
-                  <>
-                    <div className="grid gap-2.5 sm:gap-4 mb-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-                      <MetricTile label="Completion rate" value={D.metrics.daily.completion} unit="%" />
-                      <MetricTile label="Missed" value={D.metrics.daily.missed} tone="missed" />
-                      <MetricTile label="Avg delay" value={D.metrics.daily.avgDelay} unit="min" tone="completed" />
-                      <MetricTile label="Best routine" value={D.metrics.daily.bestRoutine || "—"} />
-                    </div>
-                    {/* Occurrences List */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 24 }}>
-                      <div style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-xl)", fontWeight: 600, marginBottom: 4 }}>Today's occurrences</div>
-                      {occurrences.length === 0 ? (
-                        <div style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)", padding: "32px", textAlign: "center", color: "var(--text-muted)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)" }}>
-                          NO OCCURRENCES SCHEDULED TODAY. NEXT OCCURRENCES GENERATE AT 23:00.
-                        </div>
-                      ) : (
-                        occurrences.map(o => {
-                          const r = routines.find(x => x.id === o.routineId);
-                          return (
-                            <OccurrenceRow
-                              key={o.id}
-                              id={o.id}
-                              time={o.scheduledTime}
-                              title={r ? r.title : "Unknown Routine"}
-                              category={r ? r.category : ""}
-                              status={o.status}
-                              delay={o.delay}
-                              onComplete={handleCompleteOccurrence}
-                              onSkip={handleSkipOccurrence}
-                            />
-                          );
-                        })
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {period === "week" && (
+                {(period === "week" || period === "day") && (
                   <>
                     <div className="grid gap-2.5 sm:gap-4 mb-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                       <MetricTile label="Completion rate" value={D.metrics.weekly.completion} unit="%" delta="+4%" deltaDirection="up" />
@@ -1880,6 +2735,7 @@ function Dashboard({ onSignOut, user, initialSettings }: { onSignOut: () => void
             )}
 
             {nav === "routines" && (
+              loading ? <RoutinesSkeleton /> :
               <div style={{ background: "var(--surface-card)", borderRadius: "var(--radius-lg)", padding: 0, boxShadow: "var(--ring-hairline)", overflow: "hidden" }}>
                 <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--border-subtle)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-xl)", fontWeight: 600 }}>All routines</div>
@@ -1907,7 +2763,7 @@ function Dashboard({ onSignOut, user, initialSettings }: { onSignOut: () => void
                     </thead>
                     <tbody>
                       {routines.map(r => (
-                        <tr key={r.id} className="hover:bg-[var(--surface-sunken)] transition-colors">
+                        <tr key={r.id} className="group hover:bg-[var(--surface-sunken)] transition-colors relative">
                           <td className="p-2.5 sm:p-3 lg:p-[12px_24px] border-b border-[var(--border-subtle)] font-semibold">{r.title}</td>
                           <td className="p-2.5 sm:p-3 lg:p-[12px_24px] border-b border-[var(--border-subtle)]">
                             <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
@@ -1926,11 +2782,21 @@ function Dashboard({ onSignOut, user, initialSettings }: { onSignOut: () => void
                               <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", color: "var(--text-secondary)" }}>{Math.round(r.consistency * 100)}%</span>
                             </div>
                           </td>
-                          <td className="p-2.5 sm:p-3 lg:p-[12px_24px] border-b border-[var(--border-subtle)]">
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "var(--text-sm)", color: r.active ? "var(--completed-600)" : "var(--text-muted)", fontWeight: 500 }}>
-                              <span style={{ width: 6, height: 6, borderRadius: "50%", background: r.active ? "var(--completed-600)" : "var(--border-default)", display: "inline-block" }} />
-                              {r.active ? "Active" : "Paused"}
-                            </span>
+                          <td className="p-2.5 sm:p-3 lg:p-[12px_24px] border-b border-[var(--border-subtle)] relative">
+                            <div className="group-hover:opacity-0 transition-opacity">
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "var(--text-sm)", color: r.active ? "var(--completed-600)" : "var(--text-muted)", fontWeight: 500 }}>
+                                <span style={{ width: 6, height: 6, borderRadius: "50%", background: r.active ? "var(--completed-600)" : "var(--border-default)", display: "inline-block" }} />
+                                {r.active ? "Active" : "Paused"}
+                              </span>
+                            </div>
+                            <div className="absolute inset-0 flex items-center justify-end px-4 opacity-0 group-hover:opacity-100 transition-opacity gap-3">
+                              <button onClick={() => setConfirmEditRoutine(r)} className="hover:text-[var(--interactive)] text-[var(--text-muted)] transition-colors" title="Edit routine">
+                                <Pencil size={18} />
+                              </button>
+                              <button onClick={() => setConfirmDeleteRoutine(r)} className="hover:text-[var(--missed-600)] text-[var(--text-muted)] transition-colors" title="Delete routine">
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -1940,7 +2806,7 @@ function Dashboard({ onSignOut, user, initialSettings }: { onSignOut: () => void
               </div>
             )}
 
-            {nav === "logs" && <LogsTable logs={logs} />}
+            {nav === "logs" && (loading ? <LogsSkeleton /> : <LogsTable logs={logs} />)}
 
             {nav === "exports" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -2023,150 +2889,196 @@ function Dashboard({ onSignOut, user, initialSettings }: { onSignOut: () => void
             )}
 
             {nav === "settings" && (
-              <div className="grid gap-5 grid-cols-1 lg:grid-cols-2">
+              loading ? <SettingsSkeleton /> :
+              <div className="settings-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div style={{ background: "var(--surface-card)", borderRadius: "var(--radius-lg)", padding: "var(--space-7)", boxShadow: "var(--ring-hairline)" }}>
+                  <Card padding="lg">
                     <div style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-xl)", fontWeight: 600, marginBottom: 16 }}>Profile</div>
                     <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
-                      <div style={{ width: 56, height: 56, borderRadius: "var(--radius-pill)", background: "var(--signal-500)", color: "#fff", fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                        {user.image ? (
-                          <img
-                            src={user.image}
-                            alt={user.name}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              borderRadius: "var(--radius-pill)",
-                              objectFit: "cover"
-                            }}
-                          />
-                        ) : (
-                          (user.name || "?")[0].toUpperCase()
-                        )}
-                      </div>
+                      <Avatar name={user.name} src={user.image} size={56} />
                       <div>
                         <div style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-lg)", fontWeight: 600 }}>{user.name}</div>
                         <div style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)" }}>{user.email}</div>
                       </div>
                       <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", height: 22, padding: "0 9px", background: "var(--signal-50)", color: "var(--signal-700)", fontFamily: "var(--font-mono)", fontSize: "var(--text-xs)", fontWeight: 600, borderRadius: "var(--radius-pill)" }}>PRO</span>
                     </div>
-                    {/* Rows */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      <div>
-                        <label style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-caps)", color: "var(--text-muted)", marginBottom: 6 }}>Display name</label>
-                        <input
-                          type="text"
+                    <Row
+                      label="Display name"
+                      control={
+                        <Input
                           value={displayName}
                           onChange={e => setDisplayName(e.target.value)}
-                          style={{ width: "100%", height: 42, padding: "0 12px", background: "var(--surface-card)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-md)", fontFamily: "var(--font-text)", fontSize: "var(--text-md)", color: "var(--text-primary)", outline: "none" }}
+                          onBlur={() => handleSaveSettings({ displayName })}
+                          style={{ width: "min(220px, 100%)" }}
                         />
-                      </div>
-                      <div>
-                        <label style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-caps)", color: "var(--text-muted)", marginBottom: 6 }}>Email</label>
-                        <input
-                          type="text"
-                          disabled
+                      }
+                    />
+                    <Row
+                      label="Email"
+                      control={
+                        <Input
                           value={user.email}
-                          style={{ width: "100%", height: 42, padding: "0 12px", background: "var(--surface-sunken)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-md)", fontFamily: "var(--font-text)", fontSize: "var(--text-md)", color: "var(--text-muted)", outline: "none", cursor: "not-allowed" }}
+                          disabled
+                          style={{ width: "min(220px, 100%)" }}
                         />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ background: "var(--surface-card)", borderRadius: "var(--radius-lg)", padding: "var(--space-7)", boxShadow: "var(--ring-hairline)" }}>
+                      }
+                      last
+                    />
+                    <button onClick={() => { setNav('categories'); setSelectedCategory(null); }} className="hover:bg-[var(--surface-sunken)]" style={{ width: '100%', padding: '14px 0', border: 'none', borderTop: '1px solid var(--border-subtle)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14 }}>
+                      <div style={{ flex: 1, textAlign: 'left', fontSize: 'var(--text-md)', fontWeight: 500, color: 'var(--text-primary)' }}>Manage Categories</div>
+                      <ChevronLeft size={16} style={{ transform: 'rotate(180deg)', color: 'var(--text-muted)' }} />
+                    </button>
+                  </Card>
+                  <Card padding="lg">
                     <div style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-xl)", fontWeight: 600, marginBottom: 16 }}>Time</div>
-                    <div>
-                      <label style={{ display: "block", fontSize: "var(--text-md)", fontWeight: 500 }}>Timezone</label>
-                      <div style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginTop: 2, marginBottom: 12 }}>Historical logs always preserve the timezone active at log creation. Changing this only affects future occurrences.</div>
-                      <select
-                        value={timezone}
-                        onChange={e => setTimezone(e.target.value)}
-                        style={{ width: "100%", height: 42, padding: "0 12px", background: "var(--surface-card)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-md)", fontFamily: "var(--font-text)", fontSize: "var(--text-md)", color: "var(--text-primary)", outline: "none" }}
-                      >
-                        {SETTINGS_TIMEZONES.map(t => (
-                          <option key={t} value={t}>{t}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
+                    <Row
+                      label="Timezone"
+                      sub="Historical logs always preserve the timezone active at log creation. Changing this only affects future occurrences."
+                      control={
+                        <Select
+                          value={timezone}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setTimezone(val);
+                            handleSaveSettings({ timezone: val });
+                          }}
+                          options={SETTINGS_TIMEZONES}
+                          style={{ width: "min(200px, 100%)" }}
+                        />
+                      }
+                      last
+                    />
+                  </Card>
                 </div>
-
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div style={{ background: "var(--surface-card)", borderRadius: "var(--radius-lg)", padding: "var(--space-7)", boxShadow: "var(--ring-hairline)" }}>
+                  <Card padding="lg">
                     <div style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-xl)", fontWeight: 600, marginBottom: 16 }}>Reminders</div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <div>
-                          <div style={{ fontSize: "var(--text-md)", fontWeight: 500 }}>Notifications</div>
-                          <div style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginTop: 2 }}>Fires even if app is never opened</div>
-                        </div>
-                        <input type="checkbox" checked={notif} onChange={e => setNotif(e.target.checked)} style={{ width: 18, height: 18, cursor: "pointer" }} />
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <div>
-                          <div style={{ fontSize: "var(--text-md)", fontWeight: 500 }}>Use global reminder</div>
-                          <div style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginTop: 2 }}>Apply one offset to every routine</div>
-                        </div>
-                        <input type="checkbox" checked={useGlobal} onChange={e => setUseGlobal(e.target.checked)} style={{ width: 18, height: 18, cursor: "pointer" }} />
-                      </div>
-                      {useGlobal && (
-                        <div>
-                          <label style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: "var(--text-2xs)", textTransform: "uppercase", letterSpacing: "var(--tracking-caps)", color: "var(--text-muted)", marginBottom: 6 }}>Reminder offset</label>
-                          <select
-                            value={defaultReminder}
-                            onChange={e => setDefaultReminder(e.target.value)}
-                            style={{ width: "100%", height: 42, padding: "0 12px", background: "var(--surface-card)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-md)", fontFamily: "var(--font-text)", fontSize: "var(--text-md)", color: "var(--text-primary)", outline: "none" }}
-                          >
-                            {REMINDER_OPTIONS.map(m => (
-                              <option key={m} value={m}>{m} min</option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div style={{ background: "var(--surface-card)", borderRadius: "var(--radius-lg)", padding: "var(--space-7)", boxShadow: "var(--ring-hairline)" }}>
+                    <Row
+                      label="Notifications"
+                      sub="Scheduled at occurrence generation — fires even if app is never opened"
+                      control={
+                        <Switch
+                          checked={notif}
+                          onChange={val => {
+                            setNotif(val);
+                            handleSaveSettings({
+                              notificationPreferences: {
+                                notifEnabled: val,
+                                useGlobal,
+                                skipBreaksStreak: skipBreaks
+                              }
+                            });
+                          }}
+                          ariaLabel="Notifications"
+                        />
+                      }
+                    />
+                    <Row
+                      label="Use global reminder"
+                      sub="Apply one offset to every routine"
+                      control={
+                        <Switch
+                          checked={useGlobal}
+                          onChange={val => {
+                            setUseGlobal(val);
+                            handleSaveSettings({
+                              notificationPreferences: {
+                                notifEnabled: notif,
+                                useGlobal: val,
+                                skipBreaksStreak: skipBreaks
+                              }
+                            });
+                          }}
+                          ariaLabel="Global reminder"
+                        />
+                      }
+                    />
+                    <Row
+                      label="Reminder offset"
+                      sub="Minutes before scheduled time"
+                      control={
+                        <Select
+                          value={defaultReminder}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setDefaultReminder(val);
+                            handleSaveSettings({ defaultReminderMinutes: Number(val) });
+                          }}
+                          options={REMINDER_OPTIONS.map(m => ({ value: String(m), label: `${m} min` }))}
+                          style={{ width: "min(140px, 100%)" }}
+                        />
+                      }
+                      last
+                    />
+                  </Card>
+                  <Card padding="lg">
                     <div style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-xl)", fontWeight: 600, marginBottom: 16 }}>Streaks</div>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <div>
-                        <div style={{ fontSize: "var(--text-md)", fontWeight: 500 }}>Skip breaks streak</div>
-                        <div style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", marginTop: 2 }}>Off — a skip pauses the streak without resetting it</div>
-                      </div>
-                      <input type="checkbox" checked={skipBreaks} onChange={e => setSkipBreaks(e.target.checked)} style={{ width: 18, height: 18, cursor: "pointer" }} />
-                    </div>
-                  </div>
-
-                  <div style={{ background: "var(--surface-card)", borderRadius: "var(--radius-lg)", padding: "var(--space-7)", boxShadow: "var(--ring-hairline)" }}>
+                    <Row
+                      label="Skip breaks streak"
+                      sub="Off — a skip pauses the streak without resetting it"
+                      control={
+                        <Switch
+                          checked={skipBreaks}
+                          onChange={val => {
+                            setSkipBreaks(val);
+                            handleSaveSettings({
+                              notificationPreferences: {
+                                notifEnabled: notif,
+                                useGlobal,
+                                skipBreaksStreak: val
+                              }
+                            });
+                          }}
+                          ariaLabel="Skip breaks streak"
+                        />
+                      }
+                      last
+                    />
+                  </Card>
+                  <Card padding="lg">
                     <div style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-xl)", fontWeight: 600, marginBottom: 16 }}>Data</div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                       <button
-                        onClick={() => setExportRange("all")}
+                        onClick={() => { setExportRange("all"); setConfirmExportXlsx(true); }}
                         className="hover:bg-[var(--surface-sunken)] cursor-pointer flex items-center justify-center gap-2"
-                        style={{ height: 40, border: "1.5px solid var(--border-default)", background: "var(--surface-card)", color: "var(--text-primary)", borderRadius: "var(--radius-md)", fontWeight: 600, fontSize: "var(--text-md)" }}
+                        style={{ height: 40, border: "1.5px solid var(--border-default)", background: "var(--surface-card)", color: "var(--text-primary)", borderRadius: "var(--radius-md)", fontWeight: 600, fontSize: "var(--text-md)", width: "100%", display: "flex", alignItems: "center" }}
                       >
                         <Download size={16} />Export all data (.xlsx)
                       </button>
                       <button
                         onClick={() => setConfirmSignOut(true)}
-                        className="hover:bg-[var(--missed-100)] cursor-pointer"
-                        style={{ height: 40, border: "none", background: "transparent", color: "var(--missed-600)", borderRadius: "var(--radius-md)", fontWeight: 600, fontSize: "var(--text-md)" }}
+                        className="hover:bg-[var(--missed-100)] cursor-pointer flex items-center justify-center"
+                        style={{ height: 40, border: "none", background: "transparent", color: "var(--missed-600)", borderRadius: "var(--radius-md)", fontWeight: 600, fontSize: "var(--text-md)", width: "100%" }}
                       >
                         Sign out
                       </button>
+                      <button
+                        className="hover:bg-[var(--missed-100)] cursor-pointer flex items-center justify-center"
+                        style={{ height: 40, border: "none", background: "transparent", color: "var(--missed-600)", borderRadius: "var(--radius-md)", fontWeight: 600, fontSize: "var(--text-md)", width: "100%" }}
+                      >
+                        Delete account and all data
+                      </button>
                     </div>
-                  </div>
+                  </Card>
                 </div>
               </div>
+            )}
+
+            {nav === 'categories' && !selectedCategory && (
+              loading ? <CategoriesSkeleton /> :
+              <CategoriesView onBack={() => setNav('settings')} onAddNew={() => setShowAddCategory(true)} onSelectCategory={setSelectedCategory} />
+            )}
+            {nav === 'categories' && selectedCategory && (
+              <CategoryDetailView category={selectedCategory} onBack={() => setSelectedCategory(null)} routines={routines} />
             )}
           </div>
 
           {/* Mobile Bottom Navigation */}
-          <nav className="flex sm:hidden fixed bottom-0 left-0 right-0 bg-[rgba(250,249,246,0.95)] backdrop-blur-xl border-t border-[var(--border-subtle)] py-2 px-1 pb-4 gap-0 z-50">
+          <nav className="mobile-bottomnav">
             {NAV_ITEMS.map(n => (
-              <button key={n.id} className={`flex-1 flex flex-col items-center gap-[3px] border-none bg-none cursor-pointer p-[4px_6px] transition-all ${nav === n.id ? "text-[var(--interactive)]" : "text-[var(--text-faint)]"}`} onClick={() => setNav(n.id)}>
+              <button key={n.id} className={'mobile-bottomnav-btn' + (nav === n.id ? ' active' : '')} onClick={() => { setNav(n.id); if (n.id === 'categories') setSelectedCategory(null); }}>
                 {n.icon}
-                <span className="text-[10px] font-semibold tracking-[0.01em]">{n.label}</span>
+                <span>{n.label}</span>
               </button>
             ))}
           </nav>
@@ -2179,6 +3091,32 @@ function Dashboard({ onSignOut, user, initialSettings }: { onSignOut: () => void
           config={{ icon: "log-out", title: "Sign out?", body: "You'll need to verify your email again to access your dashboard.", confirmLabel: "Sign out", cancelLabel: "Stay signed in", confirmTone: "danger" }}
           onConfirm={triggerSignOut}
           onCancel={() => setConfirmSignOut(false)}
+        />
+      )}
+
+      {confirmDeleteRoutine && (
+        <ConfirmModal
+          config={{ icon: "trash", title: "Delete Routine?", body: `Are you sure you want to delete "${confirmDeleteRoutine.title}"?`, confirmLabel: "Delete", confirmTone: "danger" }}
+          onConfirm={async () => {
+             try {
+               await fetch(`/api/routines/${confirmDeleteRoutine.id}`, { method: 'DELETE' });
+               toast("Routine deleted.", { tone: 'default' });
+               setRoutines(prev => prev.filter(x => x.id !== confirmDeleteRoutine.id));
+             } catch (e) { }
+             setConfirmDeleteRoutine(null);
+          }}
+          onCancel={() => setConfirmDeleteRoutine(null)}
+        />
+      )}
+
+      {confirmEditRoutine && (
+        <ConfirmModal
+          config={{ title: "Edit Routine?", body: `Are you sure you want to edit "${confirmEditRoutine.title}"?`, confirmLabel: "Edit", confirmTone: "primary" }}
+          onConfirm={() => {
+             setEditingRoutine(confirmEditRoutine);
+             setConfirmEditRoutine(null);
+          }}
+          onCancel={() => setConfirmEditRoutine(null)}
         />
       )}
 
@@ -2198,11 +3136,28 @@ function Dashboard({ onSignOut, user, initialSettings }: { onSignOut: () => void
         />
       )}
 
+      {showAddCategory && (
+        <AddCategoryModal onClose={() => setShowAddCategory(false)} />
+      )}
+
       {showNewRoutine && (
         <NewRoutineModal
           onClose={() => setShowNewRoutine(false)}
+          onAddNewCategory={() => setShowAddCategory(true)}
           onSave={async () => {
             setShowNewRoutine(false);
+            await fetchAllData();
+          }}
+        />
+      )}
+
+      {editingRoutine && (
+        <NewRoutineModal
+          routine={editingRoutine}
+          onClose={() => setEditingRoutine(null)}
+          onAddNewCategory={() => setShowAddCategory(true)}
+          onSave={async () => {
+            setEditingRoutine(null);
             await fetchAllData();
           }}
         />
@@ -2234,7 +3189,7 @@ export default function App() {
   useEffect(() => {
     async function checkSession() {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
         const data = await res.json();
         if (data.googleLoginEnabled !== undefined) {
           setGoogleLoginEnabled(data.googleLoginEnabled);
@@ -2256,7 +3211,7 @@ export default function App() {
   const handleAuthSuccess = async () => {
     // Re-verify session to load profile + settings
     try {
-      const res = await fetch("/api/auth/me");
+      const res = await fetch("/api/auth/me", { cache: "no-store" });
       const data = await res.json();
       if (data.googleLoginEnabled !== undefined) {
         setGoogleLoginEnabled(data.googleLoginEnabled);
@@ -2266,7 +3221,7 @@ export default function App() {
         setSettings(data.settings);
         setPage("app");
       }
-    } catch (e) {}
+    } catch (e) { }
   };
 
   return (
@@ -2285,7 +3240,7 @@ export default function App() {
           initialSettings={settings}
         />
       )}
-      
+
       {/* Toast Stack */}
       {toasts.length > 0 && (
         <div style={{ position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)", zIndex: 1000, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, pointerEvents: "none", width: "max-content", maxWidth: "calc(100vw - 32px)" }}>
