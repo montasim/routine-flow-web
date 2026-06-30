@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { Activity, ArrowRight, Check, ChevronLeft, Clock, Globe, Mail, ShieldCheck, ChartColumn } from "lucide-react"
+import { ArrowRight, Check, ChevronLeft, Clock, Globe, Mail, ShieldCheck, ChartColumn } from "lucide-react"
 import { toast } from "sonner"
 import { useQueryClient } from "@tanstack/react-query"
 
@@ -14,7 +14,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp"
-import { AppAside, AppMain, AppSection, Heading2, Paragraph, Text, View } from "@/components/ui/layout"
+import { AppAside, AppMain, Heading2, Paragraph, Text, View } from "@/components/ui/layout"
 import { cn } from "@/lib/utils"
 
 import {
@@ -22,8 +22,6 @@ import {
   Field,
   api,
   errorMessage,
-  postJson,
-  responseMessage,
 } from "@/components/app/routineflow-shell"
 
 export function AuthScreen({ initialMode }: { initialMode: "signin" | "signup" }) {
@@ -32,8 +30,8 @@ export function AuthScreen({ initialMode }: { initialMode: "signin" | "signup" }
 
   const [authStep, setAuthStep] = React.useState<"entry" | "otp">("entry")
   const authMode = initialMode
-  const [email, setEmail] = React.useState("ayaan@routineflow.app")
-  const [name, setName] = React.useState("Ayaan Rahman")
+  const [email, setEmail] = React.useState("")
+  const [name, setName] = React.useState("")
   const [code, setCode] = React.useState("")
 
   const loadWorkspaceAndRedirect = React.useCallback(async () => {
@@ -110,11 +108,11 @@ export function AuthScreen({ initialMode }: { initialMode: "signin" | "signup" }
                   </View>
                 </View>
                 <Field label="Email" required>
-                  <Input className="min-h-[48px]" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" />
+                  <Input className="min-h-[48px]" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="user@example.com" />
                 </Field>
                 {signup && (
                   <Field label="Name" optional>
-                    <Input className="min-h-[48px]" value={name} onChange={(event) => setName(event.target.value)} placeholder="Ayaan Rahman" />
+                    <Input className="min-h-[48px]" value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" />
                   </Field>
                 )}
                 <Button variant="primary" size="lg" className="mt-1 w-full justify-center !text-white [&_svg]:text-white" onClick={sendOtp}>
