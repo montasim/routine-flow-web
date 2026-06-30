@@ -1,39 +1,46 @@
-import { config } from "./config";
+import pino from "pino"
 
-type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'DEBUG';
+import { env, isProduction } from "@/lib/env"
 
-class Logger {
-  private format(level: LogLevel, context: string, message: string, meta?: any): string {
-    const timestamp = new Date().toISOString();
-    const metaString = meta ? ` | Meta: ${JSON.stringify(meta)}` : '';
-    return `[${timestamp}] [${level}] [${context}] ${message}${metaString}`;
-  }
+const redact = [
+  "req.headers.authorization",
+  "headers.authorization",
+  "authorization",
+  "cookie",
+  "cookies",
+  "token",
+  "session.token",
+  "otp",
+  "code",
+  "codeHash",
+  "RESEND_API_KEY",
+  "MONGODB_URI",
+  "AUTH_SECRET",
+]
 
-  public info(context: string, message: string, meta?: any) {
-    console.log(this.format('INFO', context, message, meta));
-  }
+let loggerInstance: pino.Logger | null = null
 
-  public warn(context: string, message: string, meta?: any) {
-    console.warn(this.format('WARN', context, message, meta));
-  }
-
-  public error(context: string, message: string, error?: any, meta?: any) {
-    let errMeta = meta || {};
-    if (error) {
-      errMeta = {
-        ...errMeta,
-        errorMessage: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      };
+export function getLogger(context = "app") {
+  if (!loggerInstance) {
+    const options: pino.LoggerOptions = {
+      level: env.LOG_LEVEL || (isProduction ? "info" : "debug"),
+      redact,
+      browser: { asObject: true },
+      base: { app: "routineflow" },
     }
-    console.error(this.format('ERROR', context, message, errMeta));
-  }
 
-  public debug(context: string, message: string, meta?: any) {
-    if (!config.isProduction) {
-      console.log(this.format('DEBUG', context, message, meta));
+    if (!isProduction) {
+      options.transport = {
+        target: "pino-pretty",
+        options: {
+          colorize: true,
+          ignore: "pid,hostname",
+          singleLine: true,
+        },
+      }
     }
+
+    loggerInstance = pino(options)
   }
+  return loggerInstance.child({ context })
 }
-
-export const logger = new Logger();
