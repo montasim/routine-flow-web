@@ -7,23 +7,18 @@ import { useRouter } from "next/navigation"
 import { useForm, type Resolver } from "react-hook-form"
 import {
   Activity,
-  ArrowRight,
   ChartColumn,
   CalendarDays,
   Check,
-  ChevronLeft,
-  Clock,
   Download,
   Folder,
   Globe,
   LayoutDashboard,
   ListTodo,
   LogOut,
-  Mail,
   Menu,
   Repeat2,
   Copy,
-  Save,
   Info,
   Settings2,
   ShieldCheck,
@@ -33,14 +28,6 @@ import {
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -57,7 +44,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import {
   Dialog,
@@ -87,18 +73,12 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp"
-import {
   AppAside,
   AppHeader,
   AppMain,
   AppNav,
   AppSection,
   Heading1,
-  Heading2,
   Paragraph,
   StrongText,
   Text,
@@ -131,11 +111,15 @@ import { cn } from "@/lib/utils"
 
 export type { ConfirmState } from "@/lib/ui-state"
 
-export type PageId = "dashboard" | "calendar" | "analytics" | "routines" | "categories" | "logs" | "exports" | "settings" | "system"
+export type PageId = "login" | "dashboard" | "calendar" | "analytics" | "routines" | "categories" | "logs" | "exports" | "settings" | "system"
 
 interface ApiEnvelope<T> {
   data: T
   meta?: Record<string, unknown>
+}
+
+interface ApiError extends Error {
+  status?: number
 }
 
 export interface Workspace {
@@ -181,9 +165,11 @@ const primaryNavItems = navItems.filter((item) => item.id !== "settings" && item
 const defaultCategoryColor = "#3e63ff"
 
 const routeByPage = Object.fromEntries(navItems.map((item) => [item.id, item.href])) as Record<PageId, string>
+routeByPage.login = "/"
 const workspaceQueryKey = ["routineflow", "workspace"] as const
 
 const pageCopy: Record<PageId, [string, string]> = {
+  login: ["Login", "Sign in to your workspace"],
   dashboard: ["Overview", "Today's occurrences and measured execution state"],
   calendar: ["Calendar", "Past logs and future generated occurrences"],
   analytics: ["Analytics", "Metrics derived only from routine_logs."],
@@ -225,7 +211,7 @@ async function fetchWorkspace(): Promise<Workspace | null> {
       jobs: [],
     }
   } catch (error) {
-    if (String(error).includes("401")) return null
+    if (isAuthError(error)) return null
     throw error
   }
 }
@@ -250,21 +236,24 @@ export function RoutineFlowShell({ page, children }: { page: PageId; children: (
     setCategoryModal,
     setConfirm,
   } = useRoutineFlowUi()
-  const [authStep, setAuthStep] = React.useState<"entry" | "otp">("entry")
-  const [authMode, setAuthMode] = React.useState<"signin" | "signup">("signin")
-  const [email, setEmail] = React.useState("ayaan@routineflow.app")
-  const [name, setName] = React.useState("Ayaan Rahman")
-  const [code, setCode] = React.useState("")
 
   function navigate(nextPage: PageId) {
     router.push(routeByPage[nextPage])
   }
 
   React.useEffect(() => {
-    if (workspaceError && !String(workspaceError).includes("401")) {
+    if (workspaceError && !isAuthError(workspaceError)) {
       toast.error(errorMessage(workspaceError))
     }
   }, [workspaceError])
+
+  React.useEffect(() => {
+    if (!isLoading && !workspace && page !== "login") {
+      router.replace("/")
+    } else if (!isLoading && workspace && page === "login") {
+      router.replace("/dashboard")
+    }
+  }, [isLoading, workspace, page, router])
 
   const loadWorkspace = React.useCallback(async () => {
     const result = await refetch()
@@ -273,60 +262,11 @@ export function RoutineFlowShell({ page, children }: { page: PageId; children: (
     }
   }, [refetch])
 
-  async function sendOtp() {
-    try {
-      await api("/api/v1/auth/otp/send", {
-        method: "POST",
-        body: { email, name: authMode === "signup" ? name : undefined, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
-      })
-      setAuthStep("otp")
-      toast.success("OTP sent. In local development, use 123456.")
-    } catch (error) {
-      toast.error(errorMessage(error))
-    }
-  }
-
-  async function verifyOtp() {
-    try {
-      await api("/api/v1/auth/otp/verify", { method: "POST", body: { email, code } })
-      toast.success("Signed in with email OTP.")
-      await loadWorkspace()
-    } catch (error) {
-      toast.error(errorMessage(error))
-    }
-  }
-
-  async function demoLogin() {
-    try {
-      const demoEmail = "ayaan@routineflow.app"
-      const sendResponse = await postJson("/api/v1/auth/otp/send", {
-        email: demoEmail,
-        name: "Ayaan Rahman",
-        timezone: "Asia/Dhaka",
-      })
-      if (!sendResponse.ok && sendResponse.status !== 409) {
-        throw new Error(await responseMessage(sendResponse))
-      }
-      const verifyResponse = await postJson("/api/v1/auth/otp/verify", {
-        email: demoEmail,
-        code: "123456",
-      })
-      if (!verifyResponse.ok) {
-        throw new Error(await responseMessage(verifyResponse))
-      }
-      toast.success("Demo workspace opened.")
-      await loadWorkspace()
-    } catch (error) {
-      toast.error(errorMessage(error))
-    }
-  }
-
   async function logout() {
     try {
       await api("/api/v1/auth/logout", { method: "POST" })
       queryClient.setQueryData(workspaceQueryKey, null)
-      setAuthStep("entry")
-      router.push(routeByPage.dashboard)
+      router.push("/login")
       toast.success("Session revoked.")
     } catch (error) {
       toast.error(errorMessage(error))
@@ -336,23 +276,11 @@ export function RoutineFlowShell({ page, children }: { page: PageId; children: (
   const isWorkspaceLoading = isLoading || !workspace
 
   if (!isWorkspaceLoading && !workspace) {
-    return (
-      <AuthScreen
-        authMode={authMode}
-        authStep={authStep}
-        code={code}
-        email={email}
-        name={name}
-        setAuthMode={setAuthMode}
-        setAuthStep={setAuthStep}
-        setCode={setCode}
-        setEmail={setEmail}
-        setName={setName}
-        sendOtp={sendOtp}
-        verifyOtp={verifyOtp}
-        demoLogin={demoLogin}
-      />
-    )
+    return null
+  }
+
+  if (!isWorkspaceLoading && workspace && page === "login") {
+    return null
   }
 
   const [title, subtitle] = pageCopy[page]
@@ -519,206 +447,7 @@ export function RoutineFlowShell({ page, children }: { page: PageId; children: (
   )
 }
 
-function AuthScreen(props: {
-  authMode: "signin" | "signup"
-  authStep: "entry" | "otp"
-  email: string
-  name: string
-  code: string
-  setAuthMode: (value: "signin" | "signup") => void
-  setAuthStep: (value: "entry" | "otp") => void
-  setEmail: (value: string) => void
-  setName: (value: string) => void
-  setCode: (value: string) => void
-  sendOtp: () => void
-  verifyOtp: () => void
-  demoLogin: () => void
-}) {
-  const signup = props.authMode === "signup"
-  const entry = props.authStep === "entry"
-  return (
-    <AppMain className="min-h-svh bg-[var(--paper-50)] px-4 py-6 sm:px-6 lg:px-10">
-      <AppSection className="mx-auto grid min-h-[calc(100svh-48px)] w-full max-w-[1120px] items-center gap-6 lg:grid-cols-[minmax(360px,440px)_minmax(0,1fr)]">
-        <Card className="motion-reveal w-full rounded-[var(--radius-xl)] [box-shadow:0_24px_70px_-48px_rgba(22,24,29,0.45),var(--ring-hairline)]">
-          <CardHeader>
-            <View className="flex w-full items-center justify-between gap-4">
-              <Brand compact />
-              <View className="rounded-[var(--radius-pill)] bg-[var(--signal-50)] px-3 py-1 [font-family:var(--font-mono-stack)] text-[var(--text-2xs)] font-semibold uppercase tracking-[0.08em] text-[var(--signal-600)]">
-                V1 API
-              </View>
-            </View>
-            {entry ? (
-              <View className="pt-8">
-                <CardTitle className="text-[clamp(30px,4vw,40px)]">{signup ? "Create your workspace" : "Welcome back"}</CardTitle>
-                <CardDescription className="mt-3 max-w-[340px] text-[var(--text-md)]">
-                  {signup ? "Start measuring scheduled behavior with a clean routine baseline." : "Sign in to review occurrences, logs, and discipline metrics."}
-                </CardDescription>
-              </View>
-            ) : (
-              <View className="pt-6">
-                <Button variant="ghost" size="sm" className="mb-4 w-fit px-0 hover:bg-transparent" onClick={() => props.setAuthStep("entry")}>
-                  <ChevronLeft className="size-4" />
-                  Back
-                </Button>
-                <CardTitle className="text-[clamp(28px,4vw,36px)]">Check your email</CardTitle>
-                <CardDescription className="mt-3 max-w-[340px] text-[var(--text-md)]">Enter the 6-digit code sent to {props.email}.</CardDescription>
-              </View>
-            )}
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            {entry ? (
-              <>
-                <View className="grid gap-3">
-                  <Button variant="outline" size="lg" className="w-full justify-center" onClick={() => window.location.assign("/api/v1/auth/social/google/start?client=web")}>
-                    <ShieldCheck className="size-4" />
-                    Continue with Google
-                  </Button>
-                  <View className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-[var(--text-xs)] text-[var(--ink-400)]">
-                    <View className="h-px bg-[var(--paper-200)]" />
-                    <Text>or</Text>
-                    <View className="h-px bg-[var(--paper-200)]" />
-                  </View>
-                </View>
-                <Field label="Email" required>
-                  <Input className="min-h-[48px]" type="email" autoComplete="email" value={props.email} onChange={(event) => props.setEmail(event.target.value)} placeholder="name@example.com" />
-                </Field>
-                {signup && (
-                  <Field label="Name" optional>
-                    <Input className="min-h-[48px]" value={props.name} onChange={(event) => props.setName(event.target.value)} placeholder="Ayaan Rahman" />
-                  </Field>
-                )}
-                <Button variant="primary" size="lg" className="mt-1 w-full justify-center !text-white [&_svg]:text-white" onClick={props.sendOtp}>
-                  <Mail className="size-4" />
-                  {signup ? "Create account" : "Continue with email"}
-                  <ArrowRight className="size-4" />
-                </Button>
-                <Button variant="ghost" className="h-11 gap-2 rounded-[var(--radius-md)] border border-transparent text-[var(--ink-700)] hover:border-[var(--paper-200)]" onClick={props.demoLogin}>
-                  <Activity className="size-4" />
-                  Open demo workspace
-                </Button>
-                <View className="flex items-center justify-center gap-2 border-t border-[var(--paper-200)] pt-2 text-sm">
-                  <Text className="text-[var(--ink-500)]">{signup ? "Already have an account?" : "No account yet?"}</Text>
-                  <Button variant="ghost" size="sm" onClick={() => props.setAuthMode(signup ? "signin" : "signup")}>
-                    {signup ? "Sign in" : "Create one"}
-                  </Button>
-                </View>
-              </>
-            ) : (
-              <>
-                <Field label="One-time code" required>
-                  <InputOTP maxLength={6} value={props.code} onChange={(value) => props.setCode(value.replace(/\D/g, ""))} inputMode="numeric" pattern="[0-9]*" containerClassName="w-full justify-between">
-                    <InputOTPGroup className="w-full justify-between">
-                      {Array.from({ length: 6 }).map((_, index) => (
-                        <InputOTPSlot key={index} index={index} className="size-12" />
-                      ))}
-                    </InputOTPGroup>
-                  </InputOTP>
-                </Field>
-                <View className="flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--paper-100)] px-3 py-2 text-[var(--text-xs)] text-[var(--ink-500)]">
-                  <Clock className="size-4 text-[var(--signal-600)]" />
-                  Codes expire quickly. Request a new code if this one fails.
-                </View>
-                <Button variant="primary" size="lg" className="w-full justify-center !text-white [&_svg]:text-white" onClick={props.verifyOtp}>
-                  <Check className="size-4" />
-                  Verify code
-                </Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
-        <AuthPreviewPanel />
-      </AppSection>
-    </AppMain>
-  )
-}
 
-function AuthPreviewPanel() {
-  const occurrences = [
-    ["Morning gym", "Completed", "+7m", "completed"],
-    ["Vitamins", "Pending", "08:15", "pending"],
-    ["Language practice", "Due later", "18:00", "later"],
-  ] as const
-
-  return (
-    <AppAside className="motion-reveal hidden min-h-[600px] overflow-hidden rounded-[var(--radius-xl)] bg-[var(--ink-900)] p-8 text-white [box-shadow:0_24px_70px_-45px_rgba(22,24,29,0.55)] lg:flex lg:flex-col lg:justify-between">
-      <View>
-        <View className="mb-8 flex items-center justify-between gap-4">
-          <View className="rounded-[var(--radius-pill)] border border-white/12 bg-white/6 px-3 py-1 [font-family:var(--font-mono-stack)] text-[var(--text-2xs)] font-semibold uppercase tracking-[0.08em] text-white/70">
-            Live workspace
-          </View>
-          <View className="flex items-center gap-2 text-[var(--text-xs)] text-white/55">
-            <Globe className="size-4" />
-            Asia/Dhaka
-          </View>
-        </View>
-        <Heading2 className="max-w-[460px] text-[clamp(34px,4vw,50px)] leading-[0.98] text-white">
-          Discipline, measured.
-        </Heading2>
-        <Paragraph className="mt-6 max-w-[460px] text-[var(--text-md)] leading-[1.6] text-white/68">
-          Scheduled occurrences, execution time, and finalized logs stay in one calm operating view.
-        </Paragraph>
-      </View>
-
-      <View className="mt-10 grid gap-4">
-        <View className="motion-card motion-card-inverse rounded-[var(--radius-lg)] border border-white/12 bg-white/[0.045] p-4">
-          <View className="flex items-start justify-between gap-4">
-            <View>
-              <View className="[font-family:var(--font-mono-stack)] text-[var(--text-2xs)] font-semibold uppercase tracking-[0.08em] text-white/45">Today</View>
-              <View className="mt-2 [font-family:var(--font-display-stack)] text-[42px] font-bold leading-none">86</View>
-            </View>
-            <View className="rounded-[var(--radius-md)] bg-[var(--completed-600)]/16 px-2.5 py-1 [font-family:var(--font-mono-stack)] text-[var(--text-xs)] font-semibold text-[#72e2a2]">
-              +12%
-            </View>
-          </View>
-          <View className="mt-4 h-2 overflow-hidden rounded-[var(--radius-pill)] bg-white/10">
-            <View className="h-full w-[86%] rounded-[var(--radius-pill)] bg-[var(--signal-500)]" />
-          </View>
-          <View className="mt-3 flex items-center gap-2 text-[var(--text-xs)] text-white/55">
-            <ChartColumn className="size-4" />
-            Current discipline score
-          </View>
-        </View>
-
-        <View className="grid gap-4">
-          {occurrences.map(([title, status, time, tone]) => (
-            <View key={title} className="motion-row flex items-center justify-between gap-4 rounded-[var(--radius-md)] border border-white/10 bg-white/[0.035] px-4 py-3">
-              <View className="flex min-w-0 items-center gap-3">
-                <View
-                  className={cn(
-                    "size-2.5 rounded-[var(--radius-pill)]",
-                    tone === "completed" && "bg-[var(--completed-600)]",
-                    tone === "pending" && "bg-[var(--skipped-600)]",
-                    tone === "later" && "bg-[var(--signal-500)]"
-                  )}
-                />
-                <View className="min-w-0">
-                  <View className="truncate font-semibold">{title}</View>
-                  <View className="text-[var(--text-xs)] text-white/48">{status}</View>
-                </View>
-              </View>
-              <View className="[font-family:var(--font-mono-stack)] text-[var(--text-xs)] font-semibold text-white/65">{time}</View>
-            </View>
-          ))}
-        </View>
-
-        <View className="grid grid-cols-3 gap-3">
-          <AuthStat value="7d" label="Window" />
-          <AuthStat value="4" label="States" />
-          <AuthStat value="V1" label="API" />
-        </View>
-      </View>
-    </AppAside>
-  )
-}
-
-function AuthStat({ value, label }: { value: string; label: string }) {
-  return (
-    <View className="motion-card motion-card-inverse rounded-[var(--radius-md)] border border-white/10 bg-white/[0.035] p-3">
-      <View className="[font-family:var(--font-display-stack)] text-[var(--text-xl)] font-bold leading-none text-white">{value}</View>
-      <View className="mt-1 text-[var(--text-xs)] text-white/52">{label}</View>
-    </View>
-  )
-}
 
 function RoutineDialog(props: { value: Routine | "new" | null; workspace: Workspace; onClose: () => void; reload: () => Promise<void> }) {
   const editing = props.value && props.value !== "new" ? props.value : null
@@ -1070,7 +799,7 @@ function ConfirmDialog(props: { state: ConfirmState | null; onClose: () => void 
   )
 }
 
-function Brand({ compact = false }: { compact?: boolean }) {
+export function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <View className={cn("flex items-center gap-2.5", !compact && "px-2 pb-6")}>
       <View className="grid size-7 place-items-center rounded bg-[var(--completed-600)] text-white">
@@ -1247,7 +976,9 @@ export async function api<T>(url: string, options: { method?: string; body?: unk
   })
   if (!response.ok) {
     const problem = await response.json().catch(() => null)
-    throw new Error(problem?.detail || problem?.title || response.statusText || "An unexpected error occurred.")
+    const err: ApiError = new Error(problem?.detail || problem?.title || response.statusText || "An unexpected error occurred.")
+    err.status = response.status
+    throw err
   }
   const contentType = response.headers.get("content-type")
   if (!contentType?.includes("application/json")) return response as T
@@ -1255,7 +986,7 @@ export async function api<T>(url: string, options: { method?: string; body?: unk
   return envelope.data
 }
 
-async function postJson(url: string, body: unknown) {
+export async function postJson(url: string, body: unknown) {
   return fetch(url, {
     method: "POST",
     headers: {
@@ -1266,7 +997,7 @@ async function postJson(url: string, body: unknown) {
   })
 }
 
-async function responseMessage(response: Response) {
+export async function responseMessage(response: Response) {
   const problem = await response.json().catch(() => null)
   return problem?.detail || problem?.title || response.statusText || "An unexpected error occurred."
 }
@@ -1290,8 +1021,15 @@ export async function downloadExport(format: string, range = "30d", startDate?: 
   setTimeout(() => URL.revokeObjectURL(url), 100)
 }
 
-function errorMessage(error: unknown) {
+export function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Something went wrong."
+}
+
+function isAuthError(error: unknown) {
+  const status = error instanceof Error ? (error as ApiError).status : undefined
+  const message = error instanceof Error ? error.message : String(error)
+
+  return status === 401 || message.includes("401") || message.includes("Authentication is required")
 }
 
 export function todayLocal() {
