@@ -25,7 +25,7 @@ import type {
 const createdAt = "2026-01-01T00:00:00.000Z"
 
 export const DEMO_USER_ID = "user_demo"
-export const DEMO_EMAIL = "ayaan@routineflow.app"
+export const DEMO_EMAIL = "demo@example.com"
 
 export function emptyData(): AppData {
   return {
@@ -45,7 +45,7 @@ export function emptyData(): AppData {
   }
 }
 
-export function createDefaultUser(email = DEMO_EMAIL, name = "Ayaan Rahman", timezone = DEFAULT_TIMEZONE) {
+export function createDefaultUser(email = DEMO_EMAIL, name = "Demo User", timezone = DEFAULT_TIMEZONE) {
   const now = new Date().toISOString()
   const user: User = {
     id: email === DEMO_EMAIL ? DEMO_USER_ID : `user_${Buffer.from(email).toString("base64url").slice(0, 16)}`,

@@ -1830,9 +1830,9 @@ try { (() => {
 // Everything here mimics what would be DERIVED from routine_logs.
 window.RF_DATA = function () {
   const user = {
-    name: 'Ayaan Rahman',
+    name: 'Demo User',
     timezone: 'Asia/Dhaka',
-    email: 'ayaan@routineflow.app'
+    email: 'demo@example.com'
   };
 
   // Today's occurrences (status drives the Home screen)

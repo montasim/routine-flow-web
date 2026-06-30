@@ -33,7 +33,7 @@ paths:
               $ref: "#/components/schemas/OtpSendRequest"
             examples:
               send:
-                value: { email: user@example.com, name: Ayaan Rahman, timezone: Asia/Dhaka }
+                value: { email: user@example.com, name: Demo User, timezone: Asia/Dhaka }
       responses:
         "202":
           description: OTP accepted for delivery
@@ -67,7 +67,7 @@ paths:
                   value:
                     data:
                       session: { token: session_token_for_api_clients, expiresAt: "2026-07-06T00:00:00.000Z" }
-                      user: { id: user_id, name: Ayaan Rahman, email: user@example.com, image: null }
+                      user: { id: user_id, name: Demo User, email: user@example.com, image: null }
                     meta: { requestId: req_123 }
         "401":
           $ref: "#/components/responses/Problem"
