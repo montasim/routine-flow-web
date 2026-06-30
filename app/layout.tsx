@@ -1,10 +1,12 @@
 import { IBM_Plex_Sans, IBM_Plex_Mono, Space_Grotesk } from "next/font/google"
+import type { Metadata, Viewport } from "next"
 
 import "./globals.css"
 import { QueryProvider } from "@/components/query-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
+import { siteConfig, structuredData } from "@/lib/seo"
 import { cn } from "@/lib/utils"
 
 const display = Space_Grotesk({
@@ -25,9 +27,58 @@ const mono = IBM_Plex_Mono({
   variable: "--font-mono",
 })
 
-export const metadata = {
-  title: "RoutineFlow",
-  description: "Behavioral routine execution tracking and analytics.",
+export const metadata: Metadata = {
+  metadataBase: siteConfig.url,
+  title: {
+    default: siteConfig.name,
+    template: `%s | ${siteConfig.name}`,
+  },
+  description: siteConfig.description,
+  applicationName: siteConfig.name,
+  keywords: siteConfig.keywords,
+  authors: [{ name: siteConfig.name }],
+  creator: siteConfig.name,
+  publisher: siteConfig.name,
+  category: "productivity",
+  alternates: {
+    canonical: "/",
+  },
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+  },
+  openGraph: {
+    title: siteConfig.name,
+    description: siteConfig.description,
+    url: "/",
+    siteName: siteConfig.name,
+    locale: "en_US",
+    type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: `${siteConfig.name} social preview`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteConfig.name,
+    description: siteConfig.description,
+    images: [
+      {
+        url: "/twitter-image",
+        alt: `${siteConfig.name} social preview`,
+      },
+    ],
+  },
+}
+
+export const viewport: Viewport = {
+  themeColor: "#f7f8f3",
+  colorScheme: "light",
 }
 
 export default function RootLayout({
@@ -42,6 +93,13 @@ export default function RootLayout({
       className={cn("antialiased", display.variable, sans.variable, mono.variable)}
     >
       <body>
+        <script
+          type="application/ld+json"
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+          }}
+        />
         <ThemeProvider defaultTheme="light" enableSystem={false}>
           <QueryProvider>
             <TooltipProvider>
