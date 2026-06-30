@@ -1,41 +1,56 @@
-import type { Metadata } from "next";
-import { Space_Grotesk, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
-import "./globals.css";
+import { IBM_Plex_Sans, IBM_Plex_Mono, Space_Grotesk } from "next/font/google"
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
+import "./globals.css"
+import { QueryProvider } from "@/components/query-provider"
+import { ThemeProvider } from "@/components/theme-provider"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { Toaster } from "@/components/ui/sonner"
+import { cn } from "@/lib/utils"
+
+const display = Space_Grotesk({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-});
+  variable: "--font-display",
+})
 
-const ibmPlexSans = IBM_Plex_Sans({
-  variable: "--font-ibm-plex-sans",
+const sans = IBM_Plex_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-});
+  variable: "--font-text",
+})
 
-const ibmPlexMono = IBM_Plex_Mono({
-  variable: "--font-ibm-plex-mono",
+const mono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
-});
+  variable: "--font-mono",
+})
 
-export const metadata: Metadata = {
-  title: "RoutineFlow — Behavioral Measurement System",
-  description: "Record scheduled behaviors, capture real execution times, and produce structured behavioral analytics.",
-};
+export const metadata = {
+  title: "RoutineFlow",
+  description: "Behavioral routine execution tracking and analytics.",
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+      className={cn("antialiased", display.variable, sans.variable, mono.variable)}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body>
+        <ThemeProvider defaultTheme="light" enableSystem={false}>
+          <QueryProvider>
+            <TooltipProvider>
+              {children}
+              <Toaster richColors position="bottom-right" />
+            </TooltipProvider>
+          </QueryProvider>
+        </ThemeProvider>
+      </body>
     </html>
-  );
+  )
 }
