@@ -1377,13 +1377,27 @@ Rolling 30-day window consistency comparison. Detects when a user's behavior is 
 
 ## 14.2 UI Components
 
-* **Progress Ring** — circular completion indicator
-* **Trend Chart** — line chart for metrics over time
-* **Yearly Heatmap** — GitHub-style contribution graph
-* **Skeleton Loaders** — micro-level loading states that match the shape of the actual component and expected data
-* **Toast Notifications** — Sonner-based alerts
-* **Modal Dialogs** — routine CRUD, confirmations, settings subflows
-* **Cards** — routine display containers
+All UI must use shadcn/ui components. No default HTML tags. No custom CSS classes.
+
+**Allowed components:**
+
+* From shadcn/ui: Button, Card, Dialog, Input, Select, Switch, Badge, Alert, Tabs, Table, Skeleton, Separator, ScrollArea, Tooltip, Popover, DropdownMenu, Form, Label, Textarea, Checkbox, RadioGroup, Slider
+* From sonner: toast()
+* From recharts: analytics charts (wrapped in Card containers)
+
+**Strictly forbidden:**
+
+* Plain HTML tags in feature code: `<div>`, `<span>`, `<p>`, `<h1>`-`<h6>`, `<ul>`, `<li>`, `<a>`, `<img>`, `<button>`, `<input>`, `<select>`, `<textarea>`, `<form>` (use shadcn components instead)
+* Custom CSS classes in class="" attributes
+* Inline styles via style={}
+* Custom className values not from shadcn/cva patterns
+* globals.css content beyond Tailwind directives (no custom CSS)
+
+**Component wrappers:**
+
+Create shadcn-based wrappers for app-specific patterns:
+* ProgressRing — composition of shadcn Card + custom SVG wrapped in shadcn component
+* YearlyHeatmap — shadcn Card + grid layout using only Tailwind utilities
 
 ---
 
@@ -1391,34 +1405,60 @@ Rolling 30-day window consistency comparison. Detects when a user's behavior is 
 
 The web UI must be consistent across all screens and flows.
 
-Rules:
+**Strict shadcn/ui + Tailwind only rules:**
 
-* Use shadcn/ui components directly for reusable UI primitives
-* Add and maintain shadcn components as source files in `components/ui`
-* Use `lucide-react` for interface icons
-* Use `sonner` for toast notifications
-* Use `next-themes` only if theme switching is implemented
-* Use `class-variance-authority`, `clsx`, and `tailwind-merge` for reusable component variants and class composition
-* Do not import Radix UI primitives directly in feature code; Radix may exist only as an implementation detail inside shadcn/ui components
-* All modal dialogs must use the same shared modal foundation and visual structure
-* Modal headers, descriptions, body spacing, footer alignment, button order, destructive actions, loading states, and close behavior must be consistent
-* Routine create/edit/delete modals must not duplicate layout code; they must compose shared modal/form components
-* Confirmation modals must use one shared confirmation component with configurable copy, icon, action tone, and callbacks
-* Form fields must use shared labeled input/select/switch components and shared validation message patterns
-* Empty, loading, error, and success states must be visually consistent across dashboard, routines, analytics, export, and settings
-* Page-level layouts must use shared spacing primitives or layout components for section gaps, panel padding, grid gaps, and toolbar spacing
-* Similar surfaces must use the same margin, padding, border radius, shadow, border, and typography rules unless a documented component variant requires otherwise
-* Dashboard cards, routine cards, category cards, settings panels, analytics panels, table containers, export panels, and modal bodies must align to the same spacing scale
-* Routine and category card edit/delete icon buttons should be visually hidden by default and revealed on card hover or keyboard focus
-* Hover-revealed card actions must remain accessible on touch devices, keyboard navigation, and assistive technology
-* Feature code must not invent one-off spacing values for common layout patterns; add or reuse a component variant instead
-* Skeleton loaders must be component-specific, not generic full-page gray blocks
-* Skeleton loaders must preserve the same layout, spacing, dimensions, and hierarchy as the loaded component
-* Skeleton loaders must reflect expected data density, such as metric values, row text, chart axes, calendar cells, form controls, and action buttons
-* Skeleton loaders must avoid layout shift when real data replaces loading placeholders
-* Skeleton loaders must exist for metric tiles, occurrence rows, routine cards, analytics charts, calendar/heatmap cells, tables, forms, modal bodies, settings panels, and export previews
-* UI copy, spacing, radius, color tokens, and typography must follow the RoutineFlow design system
-* Buttons with the same intent must use the same variant and placement everywhere
+* ALL UI must use shadcn/ui components from `components/ui` — no exceptions
+* ALL styling must use Tailwind utility classes — no custom CSS classes
+* NO inline styles via style={} — use Tailwind utilities or shadcn variants
+* NO default HTML tags in feature code — use shadcn components:
+  * Use `<Button>` not `<button>`
+  * Use `<Card>` not `<div className="card">`
+  * Use `<Input>` not `<input>`
+  * Use `<Dialog>` not custom modal divs
+  * Use `<Form>` + `<Label>` not plain form tags
+* NO custom CSS in `globals.css` — only Tailwind directives (@tailwind base/components/utilities)
+* NO custom CSS modules — use Tailwind utilities only
+* NO emotion/styled-components/css-in-js — use Tailwind utilities only
+* NO className values not from shadcn/cva patterns — use class-variance-authority for variants
+
+**Component rules:**
+
+* Use `class-variance-authority`, `clsx`, and `tailwind-merge` for reusable component variants
+* Do not import Radix UI primitives directly; Radix exists only inside shadcn/ui components
+* All modals use shadcn Dialog with consistent header/body/footer structure
+* Routine/category create/edit compose shared modal/form shadcn components
+* Confirmation uses one shadcn Dialog-based confirmation component
+* Forms use shadcn Form + Label + Input + Select patterns
+* Empty/loading/error states use shadcn Alert, Skeleton, or Card patterns
+* Page layouts use shadcn Separator for section gaps
+* Similar surfaces use same Tailwind spacing scale (p-4, gap-4, etc.)
+* Cards use shadcn Card with CardHeader/CardTitle/CardContent
+* Icon buttons use shadcn Button with variant="ghost" + size="icon"
+* Skeletons use shadcn Skeleton components matching real layout
+
+**Layout composition:**
+
+* Feature code composes shadcn components — not raw HTML
+* Use shadcn ScrollArea for scrollable regions
+* Use shadcn Tabs for tab navigation
+* Use shadcn Table for data tables
+* Use shadcn Tooltip for help text
+* Use shadcn Popover for dropdown content
+* Use shadcn DropdownMenu for action menus
+
+**globals.css requirement:**
+
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* Nothing else — no custom styles, no theme overrides */
+```
+
+All visual variety comes from:
+1. Tailwind utilities in class names
+2. shadcn component variants
+3. class-variance-authority patterns
 
 ---
 
@@ -2118,7 +2158,7 @@ Request:
 ```json
 {
   "email": "user@example.com",
-  "name": "Ayaan Rahman",
+  "name": "Demo User",
   "timezone": "Asia/Dhaka"
 }
 ```
@@ -2167,7 +2207,7 @@ Response data:
   },
   "user": {
     "id": "user_id",
-    "name": "Ayaan Rahman",
+    "name": "Demo User",
     "email": "user@example.com",
     "image": null
   }
@@ -2252,7 +2292,7 @@ Response data:
   },
   "user": {
     "id": "user_id",
-    "name": "Ayaan Rahman",
+    "name": "Demo User",
     "email": "user@example.com",
     "image": null
   }
@@ -2299,7 +2339,7 @@ Response data:
 {
   "user": {
     "id": "user_id",
-    "name": "Ayaan Rahman",
+    "name": "Demo User",
     "email": "user@example.com",
     "image": null
   },
@@ -2860,13 +2900,23 @@ Rules:
 * Next.js 16+ (web app in this repository)
 * React 19+
 * TypeScript 5+
-* Tailwind CSS 4+
-* shadcn/ui as the direct component primitive layer
+* Tailwind CSS 4+ — ALL styling via Tailwind utilities only
+* shadcn/ui as the ONLY component primitive layer — no default HTML tags
 * React Hook Form + Zod resolver for form state and validation
 * Zustand for local client UI state where needed
 * TanStack Query for client-side server-state synchronization where needed
 * TanStack Table for dense tabular views
 * Recharts for analytics visualizations
+
+**Styling architecture:**
+
+* NO custom CSS classes — only Tailwind utilities
+* NO inline styles — only Tailwind classes
+* NO custom CSS in globals.css — only @tailwind directives
+* NO CSS modules — use Tailwind utilities
+* NO css-in-js libraries — use Tailwind utilities
+* ALL UI components from shadcn/ui
+* Component variants via class-variance-authority only
 
 ## 17.2 Backend Stack
 
@@ -3054,8 +3104,8 @@ Sync behavior:
 | Responsibility | Required Package(s) | Requirement |
 |---|---|---|
 | App framework | `next`, `react`, `react-dom`, `typescript` | Use Next.js App Router, React 19+, and TypeScript for the web app |
-| Styling | `tailwindcss`, `tailwind-merge`, `clsx`, `class-variance-authority` | Use Tailwind tokens and reusable class composition for all shared UI |
-| UI primitives | shadcn/ui source components | Use shadcn components directly from `components/ui`; do not build parallel primitive systems |
+| Styling | `tailwindcss`, `tailwind-merge`, `clsx`, `class-variance-authority` | ALL styling via Tailwind utilities ONLY — no custom CSS, no inline styles, no css-in-js |
+| UI primitives | shadcn/ui source components | ALL UI from shadcn/ui ONLY — no default HTML tags, no custom components outside shadcn patterns |
 | Icons | `lucide-react` | Use Lucide icons for interface actions and status indicators |
 | Toasts | `sonner` | Use for success/error feedback after user actions |
 | Theme | `next-themes` | Use only if theme switching is implemented |
@@ -3094,6 +3144,14 @@ Package boundaries:
 * Server logs must go through the Pino-backed logger module; `console.*` must not be used directly in application code
 * Browser-only packages and APIs must be isolated behind client components or client hooks
 * No package may introduce a second competing UI primitive layer outside shadcn/ui
+* **STYLING BOUNDARIES — CRITICAL:**
+  * NO custom CSS classes — only Tailwind utilities
+  * NO inline styles — only Tailwind classes
+  * NO custom CSS in globals.css — only @tailwind directives
+  * NO CSS modules — use Tailwind utilities
+  * NO css-in-js (emotion/styled-components) — use Tailwind utilities
+  * NO default HTML tags in feature code — use shadcn components
+  * All component variants via class-variance-authority only
 * New packages require a concrete ownership and responsibility section before adoption
 
 ---
@@ -3186,6 +3244,13 @@ Every finalized log must include enough routine snapshot data to explain what th
 * Consistent spacing, padding, margins, panel structure, and layout rhythm across all UI surfaces
 * Responsive layouts for large, medium, and small browser viewports
 * DRY, modular, clean-code implementation
+* **STYLING ARCHITECTURE (NON-NEGOTIABLE):**
+  * ALL UI via shadcn/ui components — no default HTML tags
+  * ALL styling via Tailwind utilities — no custom CSS
+  * NO inline styles — use Tailwind classes only
+  * NO custom CSS in globals.css — only @tailwind directives
+  * NO CSS modules — use Tailwind utilities
+  * NO css-in-js libraries — use Tailwind utilities
 
 **Excluded:**
 * AI coach

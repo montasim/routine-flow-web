@@ -1,22 +1,25 @@
 "use client"
 
-import { Toaster as Sonner } from "sonner"
+import { Toaster as Sonner, type ToasterProps } from "sonner"
 
-type ToasterProps = React.ComponentProps<typeof Sonner>
-
-const Toaster = ({ ...props }: ToasterProps) => {
+function Toaster(props: ToasterProps) {
   return (
     <Sonner
-      className="toaster group"
+      {...props}
       toastOptions={{
         classNames: {
-          toast: "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
-          description: "group-[.toast]:text-muted-foreground",
-          actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+          toast:
+            "rounded-[var(--radius-lg)] border-0 bg-[var(--paper-0)] text-[var(--ink-900)] shadow-[var(--shadow-pop)]",
+          title:
+            "[font-family:var(--font-display-stack)] text-[var(--text-sm)] font-semibold text-[var(--ink-900)]",
+          description: "text-[var(--text-sm)] text-[var(--ink-500)]",
+          actionButton:
+            "rounded-[var(--radius-md)] bg-[var(--signal-500)] px-3 py-2 text-[var(--text-xs)] font-semibold text-white",
+          cancelButton:
+            "rounded-[var(--radius-md)] bg-[var(--paper-100)] px-3 py-2 text-[var(--text-xs)] font-semibold text-[var(--ink-700)]",
         },
+        ...props.toastOptions,
       }}
-      {...props}
     />
   )
 }

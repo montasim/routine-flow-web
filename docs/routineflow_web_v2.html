@@ -1431,8 +1431,8 @@ const state = {
 
 const db = {
   user: {
-    name: "Ayaan Rahman",
-    email: "ayaan@routineflow.app",
+    name: "Demo User",
+    email: "demo@example.com",
     image: null,
     timezone: "Asia/Dhaka",
     defaultReminderMinutes: 15,
@@ -1748,7 +1748,7 @@ function renderAuth() {
             ${isSignUp ? `
               <div class="field" style="margin-bottom:14px">
                 <label for="authName">Display name</label>
-                <input class="input" id="authName" type="text" autocomplete="name" placeholder="Ayaan Rahman" value="${esc(db.user.name)}">
+                <input class="input" id="authName" type="text" autocomplete="name" placeholder="Demo User" value="${esc(db.user.name)}">
               </div>
             ` : ""}
             <button class="btn primary" style="width:100%;min-height:46px" data-action="send-otp">${icon("mail", 17)} ${button}</button>
