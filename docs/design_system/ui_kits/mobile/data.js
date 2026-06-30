@@ -1,7 +1,7 @@
 // RoutineFlow — shared mock dataset for the mobile + web UI kits.
 // Everything here mimics what would be DERIVED from routine_logs.
 window.RF_DATA = (function () {
-  const user = { name: 'Ayaan Rahman', timezone: 'Asia/Dhaka', email: 'ayaan@routineflow.app' };
+  const user = { name: 'Demo User', timezone: 'Asia/Dhaka', email: 'demo@example.com' };
 
   // Today's occurrences (status drives the Home screen)
   const today = [

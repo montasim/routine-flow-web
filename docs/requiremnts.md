@@ -2158,7 +2158,7 @@ Request:
 ```json
 {
   "email": "user@example.com",
-  "name": "Ayaan Rahman",
+  "name": "Demo User",
   "timezone": "Asia/Dhaka"
 }
 ```
@@ -2207,7 +2207,7 @@ Response data:
   },
   "user": {
     "id": "user_id",
-    "name": "Ayaan Rahman",
+    "name": "Demo User",
     "email": "user@example.com",
     "image": null
   }
@@ -2292,7 +2292,7 @@ Response data:
   },
   "user": {
     "id": "user_id",
-    "name": "Ayaan Rahman",
+    "name": "Demo User",
     "email": "user@example.com",
     "image": null
   }
@@ -2339,7 +2339,7 @@ Response data:
 {
   "user": {
     "id": "user_id",
-    "name": "Ayaan Rahman",
+    "name": "Demo User",
     "email": "user@example.com",
     "image": null
   },
