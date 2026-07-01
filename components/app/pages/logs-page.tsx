@@ -28,25 +28,25 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import {
-  RoutineFlowShell,
+  AppShell,
   StatusBadge,
   Toolbar,
   downloadExport,
   signed,
   type Workspace,
-} from "@/components/app/routineflow-shell"
+} from "@/components/app/app-shell"
 import type { RoutineLog } from "@/lib/types"
 
 import { Skeleton } from "@/components/ui/skeleton"
 
 export function LogsPageClient() {
   return (
-    <RoutineFlowShell page="logs">
+    <AppShell page="logs">
       {(context) => {
         if (!context) return <LogsSkeleton />
         return <LogsPageContent workspace={context.workspace} />
       }}
-    </RoutineFlowShell>
+    </AppShell>
   )
 }
 

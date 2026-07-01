@@ -15,13 +15,13 @@ import {
 } from "@/components/ui/card"
 import { View, Text } from "@/components/ui/layout"
 import {
-  RoutineFlowShell,
+  AppShell,
   Toolbar,
   api,
   categoryColorClasses,
   type ConfirmState,
   type Workspace,
-} from "@/components/app/routineflow-shell"
+} from "@/components/app/app-shell"
 import type { Category } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -29,7 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export function CategoriesPageClient() {
   return (
-    <RoutineFlowShell page="categories">
+    <AppShell page="categories">
       {(context) => {
         if (!context) return <CategoriesSkeleton />
         return (
@@ -41,7 +41,7 @@ export function CategoriesPageClient() {
           />
         )
       }}
-    </RoutineFlowShell>
+    </AppShell>
   )
 }
 

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Pen, Plus, Power, Search, Trash } from "lucide-react"
+import { Loader2, Pen, Plus, Power, Search, Trash } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
-  RoutineFlowShell,
+  AppShell,
   StatusBadge,
   Toolbar,
   api,
@@ -30,7 +30,7 @@ import {
   reminderLabel,
   type ConfirmState,
   type Workspace,
-} from "@/components/app/routineflow-shell"
+} from "@/components/app/app-shell"
 import type { Routine } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -38,12 +38,12 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export function RoutinesPageClient() {
   return (
-    <RoutineFlowShell page="routines">
+    <AppShell page="routines">
       {(context) => {
         if (!context) return <RoutinesSkeleton />
         return <RoutinesPageContent workspace={context.workspace} reload={context.reload} confirm={context.confirm} openRoutine={context.openRoutine} />
       }}
-    </RoutineFlowShell>
+    </AppShell>
   )
 }
 
@@ -122,6 +122,7 @@ function RoutinesView(props: {
   reload: () => Promise<void>
 }) {
   const [deletingIds, setDeletingIds] = React.useState<string[]>([])
+  const [activatingIds, setActivatingIds] = React.useState<string[]>([])
 
   const rows = props.workspace.routines
     .filter((routine) => `${routine.title} ${categoryName(props.workspace, routine.categoryId)}`.toLowerCase().includes(props.search.toLowerCase()))
@@ -235,24 +236,40 @@ function RoutinesView(props: {
                       variant="outline"
                       size="sm"
                       className="h-8 shrink-0 text-[var(--ink-700)] hover:bg-[var(--paper-100)]"
+                      disabled={activatingIds.includes(routine.id)}
                       onClick={() =>
                         props.confirm({
                           title: routine.isActive ? "Deactivate routine?" : "Activate routine?",
                           body: routine.isActive ? "Pending future occurrences are regenerated after deactivation." : "Activation generates matching occurrences in the current 7-day window.",
                           label: routine.isActive ? "Deactivate" : "Activate",
                           action: async () => {
-                            await api(`/api/v1/routines/${routine.id}`, {
-                              method: "PATCH",
-                              body: { isActive: !routine.isActive },
-                            })
-                            toast.success("Routine updated.")
-                            await props.reload()
+                            setActivatingIds((prev) => [...prev, routine.id])
+                            try {
+                              await api(`/api/v1/routines/${routine.id}`, {
+                                method: "PATCH",
+                                body: { isActive: !routine.isActive },
+                              })
+                              toast.success("Routine updated.")
+                              await props.reload()
+                            } finally {
+                              setActivatingIds((prev) => prev.filter((id) => id !== routine.id))
+                            }
                           },
                         })
                       }
                     >
-                      <Power className="size-3.5 mr-1.5" />
-                      {routine.isActive ? "Deactivate" : "Activate"}
+                      {activatingIds.includes(routine.id) ? (
+                        <Loader2 className="size-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <Power className="size-3.5 mr-1.5" />
+                      )}
+                      {activatingIds.includes(routine.id)
+                        ? routine.isActive
+                          ? "Deactivating..."
+                          : "Activating..."
+                        : routine.isActive
+                          ? "Deactivate"
+                          : "Activate"}
                     </Button>
                   )}
                 </View>

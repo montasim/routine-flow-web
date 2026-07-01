@@ -3,10 +3,10 @@
 import * as React from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useForm, type Resolver } from "react-hook-form"
 import {
-  Activity,
   ChartColumn,
   CalendarDays,
   Check,
@@ -216,7 +216,7 @@ async function fetchWorkspace(): Promise<Workspace | null> {
   }
 }
 
-export function RoutineFlowShell({ page, children }: { page: PageId; children: (context: RoutineFlowPageContext | null) => React.ReactNode }) {
+export function AppShell({ page, children }: { page: PageId; children: (context: RoutineFlowPageContext | null) => React.ReactNode }) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const {
@@ -733,6 +733,9 @@ export function OccurrenceCard(props: { workspace: Workspace; occurrence: Occurr
 }
 
 function OccurrenceActions(props: { workspace: Workspace; occurrence: Occurrence; reload: () => Promise<void>; confirm: (state: ConfirmState) => void }) {
+  const [isSkipping, setIsSkipping] = React.useState(false)
+  const [isCompleting, setIsCompleting] = React.useState(false)
+
   if (props.occurrence.status !== "Pending" || props.occurrence.date !== todayLocal()) return <StatusBadge status={props.occurrence.status} delay={props.occurrence.delayMinutes} />
   return (
     <View className="flex flex-wrap justify-end gap-2">
@@ -740,6 +743,7 @@ function OccurrenceActions(props: { workspace: Workspace; occurrence: Occurrence
         variant="outline"
         size="sm"
         className="gap-2"
+        disabled={isSkipping || isCompleting}
         onClick={() =>
           props.confirm({
             title: "Skip occurrence?",
@@ -747,27 +751,41 @@ function OccurrenceActions(props: { workspace: Workspace; occurrence: Occurrence
             label: "Skip occurrence",
             tone: "warning",
             action: async () => {
-              await api(`/api/v1/occurrences/${props.occurrence.id}/skip`, { method: "POST" })
-              toast.success("Occurrence skipped and logged.")
-              await props.reload()
+              setIsSkipping(true)
+              try {
+                await api(`/api/v1/occurrences/${props.occurrence.id}/skip`, { method: "POST" })
+                toast.success("Occurrence skipped and logged.")
+                await props.reload()
+              } finally {
+                setIsSkipping(false)
+              }
             },
           })
         }
       >
-        <FastForward className="size-4" />
-        Skip
+        {isSkipping ? <Loader2 className="size-4 animate-spin" /> : <FastForward className="size-4" />}
+        {isSkipping ? "Skipping..." : "Skip"}
       </Button>
       <Button
         size="sm"
         variant="success"
+        className="gap-2"
+        disabled={isSkipping || isCompleting}
         onClick={async () => {
-          await api(`/api/v1/occurrences/${props.occurrence.id}/complete`, { method: "POST" })
-          toast.success("Occurrence completed and logged.")
-          await props.reload()
+          setIsCompleting(true)
+          try {
+            await api(`/api/v1/occurrences/${props.occurrence.id}/complete`, { method: "POST" })
+            toast.success("Occurrence completed and logged.")
+            await props.reload()
+          } catch (error) {
+            toast.error(errorMessage(error))
+          } finally {
+            setIsCompleting(false)
+          }
         }}
       >
-        <Check className="size-4" />
-        Complete
+        {isCompleting ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+        {isCompleting ? "Completing..." : "Complete"}
       </Button>
     </View>
   )
@@ -802,8 +820,8 @@ function ConfirmDialog(props: { state: ConfirmState | null; onClose: () => void 
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <View className={cn("flex items-center gap-2.5", !compact && "px-2 pb-6")}>
-      <View className="grid size-7 place-items-center rounded bg-[var(--completed-600)] text-white">
-        <Activity className="size-4" />
+      <View className="grid size-7 place-items-center">
+        <Image src="/logo.svg" alt="RoutineFlow" width={32} height={32} className="h-8 w-auto" priority={compact} />
       </View>
       <View className="[font-family:var(--font-display-stack)] text-[19px] font-bold tracking-normal text-[var(--ink-900)]">
         Routine<span className="text-[var(--signal-500)]">Flow</span>
@@ -846,7 +864,7 @@ export function MetricGrid({ metrics }: { metrics: [string, string, string][] })
           </Card>
         )
       })}
-      
+
       {!expanded && metrics.length > 1 && (
         <Button variant="outline" className="md:hidden" onClick={() => setExpanded(true)}>
           Show {metrics.length - 1} more metrics
