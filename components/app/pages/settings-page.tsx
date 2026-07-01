@@ -26,24 +26,24 @@ import {
   Field,
   InfoList,
   InfoSwitch,
-  RoutineFlowShell,
+  AppShell,
   api,
   reminderLabel,
   reminders,
   type ConfirmState,
   type Workspace,
-} from "@/components/app/routineflow-shell"
+} from "@/components/app/app-shell"
 
 import { Skeleton } from "@/components/ui/skeleton"
 
 export function SettingsPageClient() {
   return (
-    <RoutineFlowShell page="settings">
+    <AppShell page="settings">
       {(context) => {
         if (!context) return <SettingsSkeleton />
         return <SettingsView workspace={context.workspace} reload={context.reload} confirm={context.confirm} logout={context.logout} />
       }}
-    </RoutineFlowShell>
+    </AppShell>
   )
 }
 

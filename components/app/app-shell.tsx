@@ -216,7 +216,7 @@ async function fetchWorkspace(): Promise<Workspace | null> {
   }
 }
 
-export function RoutineFlowShell({ page, children }: { page: PageId; children: (context: RoutineFlowPageContext | null) => React.ReactNode }) {
+export function AppShell({ page, children }: { page: PageId; children: (context: RoutineFlowPageContext | null) => React.ReactNode }) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const {
@@ -733,6 +733,9 @@ export function OccurrenceCard(props: { workspace: Workspace; occurrence: Occurr
 }
 
 function OccurrenceActions(props: { workspace: Workspace; occurrence: Occurrence; reload: () => Promise<void>; confirm: (state: ConfirmState) => void }) {
+  const [isSkipping, setIsSkipping] = React.useState(false)
+  const [isCompleting, setIsCompleting] = React.useState(false)
+
   if (props.occurrence.status !== "Pending" || props.occurrence.date !== todayLocal()) return <StatusBadge status={props.occurrence.status} delay={props.occurrence.delayMinutes} />
   return (
     <View className="flex flex-wrap justify-end gap-2">
@@ -740,6 +743,7 @@ function OccurrenceActions(props: { workspace: Workspace; occurrence: Occurrence
         variant="outline"
         size="sm"
         className="gap-2"
+        disabled={isSkipping || isCompleting}
         onClick={() =>
           props.confirm({
             title: "Skip occurrence?",
@@ -747,27 +751,41 @@ function OccurrenceActions(props: { workspace: Workspace; occurrence: Occurrence
             label: "Skip occurrence",
             tone: "warning",
             action: async () => {
-              await api(`/api/v1/occurrences/${props.occurrence.id}/skip`, { method: "POST" })
-              toast.success("Occurrence skipped and logged.")
-              await props.reload()
+              setIsSkipping(true)
+              try {
+                await api(`/api/v1/occurrences/${props.occurrence.id}/skip`, { method: "POST" })
+                toast.success("Occurrence skipped and logged.")
+                await props.reload()
+              } finally {
+                setIsSkipping(false)
+              }
             },
           })
         }
       >
-        <FastForward className="size-4" />
-        Skip
+        {isSkipping ? <Loader2 className="size-4 animate-spin" /> : <FastForward className="size-4" />}
+        {isSkipping ? "Skipping..." : "Skip"}
       </Button>
       <Button
         size="sm"
         variant="success"
+        className="gap-2"
+        disabled={isSkipping || isCompleting}
         onClick={async () => {
-          await api(`/api/v1/occurrences/${props.occurrence.id}/complete`, { method: "POST" })
-          toast.success("Occurrence completed and logged.")
-          await props.reload()
+          setIsCompleting(true)
+          try {
+            await api(`/api/v1/occurrences/${props.occurrence.id}/complete`, { method: "POST" })
+            toast.success("Occurrence completed and logged.")
+            await props.reload()
+          } catch (error) {
+            toast.error(errorMessage(error))
+          } finally {
+            setIsCompleting(false)
+          }
         }}
       >
-        <Check className="size-4" />
-        Complete
+        {isCompleting ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+        {isCompleting ? "Completing..." : "Complete"}
       </Button>
     </View>
   )

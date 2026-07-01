@@ -23,20 +23,20 @@ import {
   Empty,
   InfoList,
   MetricGrid,
-  RoutineFlowShell,
+  AppShell,
   type Workspace,
-} from "@/components/app/routineflow-shell"
+} from "@/components/app/app-shell"
 
 import { Skeleton } from "@/components/ui/skeleton"
 
 export function SystemPageClient() {
   return (
-    <RoutineFlowShell page="system">
+    <AppShell page="system">
       {(context) => {
         if (!context) return <SystemSkeleton />
         return <SystemView workspace={context.workspace} />
       }}
-    </RoutineFlowShell>
+    </AppShell>
   )
 }
 

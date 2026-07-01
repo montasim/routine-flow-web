@@ -31,14 +31,14 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import {
   MetricGrid,
-  RoutineFlowShell,
+  AppShell,
   api,
   categoryName,
   recurrenceLabel,
   signed,
   titleCase,
   type Workspace,
-} from "@/components/app/routineflow-shell"
+} from "@/components/app/app-shell"
 
 interface CompletionTickProps {
   x?: string | number
@@ -54,12 +54,12 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export function AnalyticsPageClient() {
   return (
-    <RoutineFlowShell page="analytics">
+    <AppShell page="analytics">
       {(context) => {
         if (!context) return <AnalyticsSkeleton />
         return <AnalyticsPageContent workspace={context.workspace} />
       }}
-    </RoutineFlowShell>
+    </AppShell>
   )
 }
 

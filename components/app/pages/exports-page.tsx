@@ -30,23 +30,23 @@ import {
 } from "@/components/ui/table"
 import {
   Field,
-  RoutineFlowShell,
+  AppShell,
   downloadExport,
   todayLocal,
   addDaysClient,
   type Workspace,
-} from "@/components/app/routineflow-shell"
+} from "@/components/app/app-shell"
 
 import { Skeleton } from "@/components/ui/skeleton"
 
 export function ExportsPageClient() {
   return (
-    <RoutineFlowShell page="exports">
+    <AppShell page="exports">
       {(context) => {
         if (!context) return <ExportsSkeleton />
         return <ExportsView workspace={context.workspace} />
       }}
-    </RoutineFlowShell>
+    </AppShell>
   )
 }
 

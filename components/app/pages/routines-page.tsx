@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
-  RoutineFlowShell,
+  AppShell,
   StatusBadge,
   Toolbar,
   api,
@@ -30,7 +30,7 @@ import {
   reminderLabel,
   type ConfirmState,
   type Workspace,
-} from "@/components/app/routineflow-shell"
+} from "@/components/app/app-shell"
 import type { Routine } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -38,12 +38,12 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export function RoutinesPageClient() {
   return (
-    <RoutineFlowShell page="routines">
+    <AppShell page="routines">
       {(context) => {
         if (!context) return <RoutinesSkeleton />
         return <RoutinesPageContent workspace={context.workspace} reload={context.reload} confirm={context.confirm} openRoutine={context.openRoutine} />
       }}
-    </RoutineFlowShell>
+    </AppShell>
   )
 }
 

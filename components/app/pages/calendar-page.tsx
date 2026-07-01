@@ -21,7 +21,7 @@ import { Text, View } from "@/components/ui/layout"
 import {
   Empty,
   OccurrenceCard,
-  RoutineFlowShell,
+  AppShell,
   StatusBadge,
   addDaysClient,
   calendarDays,
@@ -31,19 +31,19 @@ import {
   weekdays,
   type ConfirmState,
   type Workspace,
-} from "@/components/app/routineflow-shell"
+} from "@/components/app/app-shell"
 import { cn } from "@/lib/utils"
 
 import { Skeleton } from "@/components/ui/skeleton"
 
 export function CalendarPageClient() {
   return (
-    <RoutineFlowShell page="calendar">
+    <AppShell page="calendar">
       {(context) => {
         if (!context) return <CalendarSkeleton />
         return <CalendarPageContent workspace={context.workspace} reload={context.reload} confirm={context.confirm} />
       }}
-    </RoutineFlowShell>
+    </AppShell>
   )
 }
 

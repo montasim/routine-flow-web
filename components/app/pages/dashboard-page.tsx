@@ -18,7 +18,7 @@ import {
   InfoList,
   MetricGrid,
   OccurrenceRow,
-  RoutineFlowShell,
+  AppShell,
   addDaysClient,
   api,
   routineTitle,
@@ -27,18 +27,18 @@ import {
   todayLocal,
   type ConfirmState,
   type Workspace,
-} from "@/components/app/routineflow-shell"
+} from "@/components/app/app-shell"
 
 import { Skeleton } from "@/components/ui/skeleton"
 
 export function DashboardPageClient() {
   return (
-    <RoutineFlowShell page="dashboard">
+    <AppShell page="dashboard">
       {(context) => {
         if (!context) return <DashboardSkeleton />
         return <Dashboard workspace={context.workspace} reload={context.reload} openRoutine={() => context.openRoutine("new")} confirm={context.confirm} />
       }}
-    </RoutineFlowShell>
+    </AppShell>
   )
 }
 

@@ -22,7 +22,7 @@ import {
   Field,
   api,
   errorMessage,
-} from "@/components/app/routineflow-shell"
+} from "@/components/app/app-shell"
 
 export function AuthScreen({ initialMode }: { initialMode: "signin" | "signup" }) {
   const router = useRouter()
