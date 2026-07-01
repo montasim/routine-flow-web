@@ -3,10 +3,10 @@
 import * as React from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useForm, type Resolver } from "react-hook-form"
 import {
-  Activity,
   ChartColumn,
   CalendarDays,
   Check,
@@ -802,8 +802,8 @@ function ConfirmDialog(props: { state: ConfirmState | null; onClose: () => void 
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <View className={cn("flex items-center gap-2.5", !compact && "px-2 pb-6")}>
-      <View className="grid size-7 place-items-center rounded bg-[var(--completed-600)] text-white">
-        <Activity className="size-4" />
+      <View className="grid size-7 place-items-center">
+        <Image src="/logo.svg" alt="RoutineFlow" width={32} height={32} className="h-8 w-auto" priority={compact} />
       </View>
       <View className="[font-family:var(--font-display-stack)] text-[19px] font-bold tracking-normal text-[var(--ink-900)]">
         Routine<span className="text-[var(--signal-500)]">Flow</span>
@@ -846,7 +846,7 @@ export function MetricGrid({ metrics }: { metrics: [string, string, string][] })
           </Card>
         )
       })}
-      
+
       {!expanded && metrics.length > 1 && (
         <Button variant="outline" className="md:hidden" onClick={() => setExpanded(true)}>
           Show {metrics.length - 1} more metrics
